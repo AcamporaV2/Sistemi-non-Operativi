@@ -1,0 +1,16 @@
+Si consideri il seguente problema: In un ambulatorio medico lavorano due medici ed un infermiere.
+Inizialmente i due medici sono in attesa dell'arrivo dei pazienti. Un paziente entra nell'ambulatorio e si
+reca dal primo medico libero che esegue la visita medica. Al termine della visita, il medico redige un
+referto che inserisce in un porta documenti con M posizioni. L'infermiere preleva un referto alla volta e
+lo inserisce nel database dell'ambulatorio. Se entrambi i medici sono impegnati, il paziente si
+accomoda nella sala d'aspetto che dispone di N  sedie. Se le N sedie sono tutte occupate, il paziente
+lascia I'ambulatorio.
+
+1.Scomposizione
+Abbiamo tre entita': medici, infermiere e pazienti.
+I Medici: due medici disponibili a visitare pazienti. DOpo la visita, inseriscono il referto in un porta documenti con M posizioni.
+Infermiere: preleva un referto alla volta dal porta documenti e lo isnerisce nel database
+Pazienti: attendono in una sala d'attesa con N sedie. Se entrambe le sedie sono occupate, il paziente lascia l'ambulatorio.
+
+
+PAZIENTE()

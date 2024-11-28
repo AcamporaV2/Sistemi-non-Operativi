@@ -1,0 +1,52 @@
+Traccia Biblioteca:
+In una biblioteca universitaria possono entrare e trovare posto seduto al piu N studenti. Ogni studente che ha trovato posto può richiedere al bibliotecario un volume degli M a disposizione, considerando che per ogni volume ci sono K copie.
+
+1.Scomposizione
+Lo Studente arriva, controlla se ci sono posti liberi e nel caso ci siano, entra.
+Sceglie il volume da leggere, e chiede al bibliotecario se disponibile, altrimenti aspetta.
+Riceve il volume, lo legge. Una volta letto lo ripone ed esce.
+
+Il Bibliotecario attende che uno studente richieda il volume, una volta richiesto, lo consegna.
+
+
+STUDENTE(){
+
+    // aspetto che ci siano posti libero
+    wait(posti);
+
+    // effettuo scelta sugli M volumi
+    pick = rand(1,M);
+    wait(copie_volume[pick]);
+
+    // se almeno un volume e' libero posso richiederlo
+    wait(accesso);
+    signal(segnalazione);
+    wait(segnalazione);
+    signal(accesso);
+
+    {leggo il volume}
+    {ripongo il volume}
+    signal(copie_volume[pick]);
+
+    {abbandono la biblioteca}
+    // segnalo l'uscita per liberare un posto
+    signal(posti);
+}
+
+
+
+
+BIBLIOTECARIO(){
+
+    repeat
+
+    // aspetto che uno studente richiede un volume
+    wait(segnalazione);
+    {prendo il volume}
+    {consegno il volume allo studente}
+
+    // segnalo allo studente
+    signale(segnalazione);
+
+    forever
+}

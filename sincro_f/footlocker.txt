@@ -1,0 +1,43 @@
+Traccia "Fila in un negozio"
+
+In un negozio Foot Locker, c'è una guardia che si occupa di far entrare un numero predefinito di persone alla volta(ad esempio: 1,2,N). Quando le persone escono, la guardia ripete il ciclo. Inoltre, ci sono potenziali clienti che attendono il loro turno per entrare nel negozio, fare acquisti e poi uscire, segnalando la loro uscita.
+
+1.Scomposizione
+La Guardia deve far entrare un numero predefinito di persone per volta all'interno del negozio, all'uscita di queste si ripete il ciclo.
+
+Le Persone aspettano il proprio turno, per enetrare, fanno compere e poi escono segnalando l'uscita.
+
+
+GUARDIA(){
+
+  repeat
+
+  // la guardia aspetta che le persone arrivino in fila
+  wait(persone_in_fila)
+
+  // se ci sono posto liberi in negozio
+  wait(persone_ammesse)
+
+  // fai entrare
+  signal(turno)
+
+  forever
+}
+
+
+
+PERSONA(){
+
+   // segnala l'arrivo in fila
+   signal(persone_in_fila)
+
+   // aspetta il turno
+   wait(turno)
+
+   {fai compere}
+
+   // segnala l'uscita
+   signal(persone_ammesse)
+}
+
+

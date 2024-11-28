@@ -1,0 +1,85 @@
+In un ristorante self-service, i clienti, dopo aver mangiato, dispongono i vassoi in M contenitori, ognuno di K ripiani. Periodicamente, un addetto sceglie un contenitore tra quelli in cui ci sono piu ripiani liberi, lo svuota lava i piatti e riporta il contenitore in sala.
+
+1.Scomposizione
+I Clienti ripongono i vassoi nei M contenitori disponibili(K ripiani).
+L'addetto svuota, pulisce il contenitore che ha il maggior numero di ripiani liberi, per poi riportarlo in sala.
+
+
+
+CLIENTE() {
+  // Arrivo nel ristorante, attendo che sia disponibile un contenitore
+  wait(contenitori);
+
+  // Utilizzo un indice per capire a quale contenitore sto facendo riferimento
+  wait(sem_CS);
+  contenitore_loc = index++; // Incremento l'indice globale e lo assegno alla variabile locale contenitore_loc
+  signal(sem_CS); // Rilascio il semaforo della sezione critica
+
+  // Attendo se non ci sono vassoi puliti, altrimenti prendo il vassoio
+  wait(vassoio_pulito[contenitore_loc]);
+  { Prendi il vassoio } // Prendo un vassoio pulito dal contenitore assegnato
+
+  // Rilascio il contenitore
+  wait(sem_CS);
+  index--; // Decremento l'indice globale
+  signal(sem_CS); // Rilascio il semaforo della sezione critica
+  signal(contenitori); // Segnalo che il contenitore è di nuovo disponibile
+
+  { Mangia } // Il cliente consuma il pasto
+
+  // Dopo aver mangiato, poso il vassoio in un contenitore
+  wait(contenitori);
+
+  wait(sem_CS);
+  contenitore_loc = index++; // Incremento l'indice globale e lo assegno alla variabile locale contenitore_loc
+  signal(sem_CS);
+
+  // Poso il vassoio precedentemente preso
+  signal(vassoio_sporco[contenitore_loc]);
+  { Posa il vassoio } // Il cliente ripone il vassoio sporco nel contenitore
+
+  wait(sem_CS);
+  ripiani_sporchi[contenitore_loc]++; // Incremento il conteggio dei ripiani sporchi nel contenitore assegnato
+  index--; // Decremento l'indice globale
+  signal(sem_CS);
+  signal(contenitori); // Segnalo che il contenitore è di nuovo disponibile
+
+  { Esci } // Il cliente esce dal ristorante
+}
+
+
+
+CAMERIERE() {
+  repeat
+    // Variabili locali per la ricerca del contenitore con più ripiani sporchi
+    int max = 0;
+    int ind = -1;
+
+    // Ricerca del contenitore con maggior numero di ripiani sporchi
+    for (int i = 0; i < M; i++) {
+      wait(sem_CS); // Accedo alla sezione critica per leggere le variabili condivise
+      if (ripiani_sporchi[i] > max) { // Controllo se il numero di ripiani sporchi è maggiore del massimo attuale
+        max = ripiani_sporchi[i]; // Aggiorno il valore massimo
+        ind = i; // Aggiorno l'indice del contenitore con più ripiani sporchi
+      }
+      signal(sem_CS); // Rilascio la sezione critica
+    }
+
+    if (ind != -1) { // Se c'è almeno un contenitore con ripiani sporchi
+      // Una volta trovato, pulisco tutto
+      wait(contenitori);
+      { Pulisci i vassoi } // Pulisci i vassoi nel contenitore selezionato
+
+      // Segnalo di aver pulito il contenitore
+      for (int i = 0; i < max; i++) {
+        signal(vassoio_pulito[ind]); // Segnalo che un vassoio pulito è disponibile
+      }
+
+      // Reimposto ripiani_sporchi a 0 e sblocco il contenitore
+      wait(sem_CS);
+      ripiani_sporchi[ind] = 0; // Resetta il conteggio dei ripiani sporchi nel contenitore selezionato
+      signal(sem_CS);
+      signal(contenitori); // Segnalo che il contenitore è di nuovo disponibile
+    }
+  forever
+}

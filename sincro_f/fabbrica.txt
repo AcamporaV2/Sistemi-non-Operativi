@@ -1,0 +1,59 @@
+In una fabbrica, N operai preparano piastrelle da far cuocere in un forno, capace di cuocerne M contemporaneamente.
+All'uscita dal forno K operai visionano le piastrelle per decorarle seguendo questa sequenza di passi:
+  -Se trova una piastrella difettata inizia a prenderne 2 alla volta dal forno;
+  -Altrimenti ne prende 1 alla volta.
+
+1.Scomposizione
+Operai: preparano piastrelle in un forno, capace di cuocerne massimo M contemporanemante
+Decoratori: k operai visionano le piastrelle in uscita dal forno, per decorarle;
+se si trova una piastrella difettata, inizia a prenderene 2 alla volta, altrimenti ne prende solo 1.
+
+
+OPERAI() {
+
+  repeat
+
+    { prepara una piastrella }
+
+    wait(forno); // attendi spazio nel forno
+    wait(mutex_CS);
+    piastrelle_in_forno++; // incrementa il numero di piastrelle nel forno
+    signal(mutex_CS);
+
+    { Inserisci piastrella}
+
+    wait(mutex_CS);
+    piastrelle_pronte++; // incrementa il numero di piastrelle pronte
+    signal(mutex_CS);
+    signal(decorazione); // notifica operai decoratori che una piastrella è pronta
+
+  forever
+}
+
+
+
+DECORATORI() {
+
+  repeat
+
+    // Controlla piastrelle disponibili per la decorazione
+    wait(decorazione); // attendi che ci siano piastrelle pronte
+    wait(mutex_CS);
+
+    // Decidi quante piastrelle prelevare (1 o 2) in base al difetto
+    if (piastrella_difettata) {
+      { Prendi 2 piastrelle }
+      piastrelle_pronte -= 2; // Rimuovi 2 piastrelle dalla coda di pronte
+    } else {
+      { Prendi 1 piastrella normale }
+      piastrelle_pronte--; // rimuovi 1 piastrella dalla coda di pronte
+    }
+
+    piastrella_difettata = verifica_difetto(); // aggiorna il flag per vedere se ci sono ancora delle piastrelel difettate
+    signal(mutex_CS);
+
+    { Decora piastrelle }
+
+  forever
+}
+

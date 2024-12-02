@@ -1,0 +1,44 @@
+E' in atto la selezione degli aspiranti della 12a edizione di MasterChef Italia. Nel grande salone di attesa possono prendere posto al piu' N aspiranti cuochi, mentre i restanti prenderanno parte alla sessione di prova di cucina successiva. Le sessioni previste sono M. Ogni aspirante cuoco che ha trovato posto sara' chiamato nella sala cucina dai tre Chef stellati.
+Nel salone di attesa sono disponibili Z(<N) tavoli da cucina portatili per esercitarsi durante l'attesa, e che ciascun cuoco portera' con se nella sala cucina durante la propria prova. I tavoli per le esercitazioni sono distribuiti concorrentemente ai piu' veloci ad accaparrarseli.
+Terminata la prova l'aspirante cuoco lascia la postazione in sala cucina facendo posto al prossimo candidato e rilasciando il tavolo da cucina portatile disponibile per un altro cuoco dell'ultima sessione di prova.
+
+
+// Aspirante Cuoco
+ASPIRANTE_CUOCO(int ID) {
+    // Aspetta che inizi la sessione
+    signal(partecipante)  // Segnala di essere arrivato
+    wait(inizio_sessione)  // Attende l'inizio della sessione
+
+    // Prende un tavolo portatile
+    wait(tavolo_portatile)  // Attende un tavolo disponibile
+    wait(candidato)  // Aspetta che ci sia posto per lui nella sala cucina
+
+    {Fai la prova di cucina}
+
+    signal(fine_prova)  // Segnala che ha finito la prova
+
+    // Dopo la prova, libera il tavolo
+    signal(tavolo_portatile)
+}
+
+// Chef
+CHEF {
+    // Attende che ci sia almeno un partecipante pronto
+    wait(partecipante)
+
+    for(int j = 0; j < M; j++) {  // M sessioni di cucina
+        // Sblocca i partecipanti per ogni sessione
+        for(int i = 0; i < N; i++) {
+            signal(inizio_sessione)  // Sblocca il partecipante per iniziare la prova
+        }
+
+        // Per ogni partecipante, fai il giudizio della prova
+        for(int i = 0; i < N; i++) {
+            signal(candidato)  // Invita il cuoco a fare la prova
+            {Dai il verdetto}  // Lo chef dà il suo giudizio
+            wait(fine_prova)  // Aspetta che il partecipante termini la prova
+        }
+    }
+}
+
+

@@ -1,0 +1,60 @@
+In un pub tedesco durante l’Oktoberfest, è consentito l’ingresso solo a gruppi di cinque avventori dopo che un altro gruppo di cinque ha lasciato il pub, nel momento di maggiore affollamento. Una volta entrati, N birrai
+pongono continuamente boccali di birra di volta in volta in un bancone che può contenere MAX boccali. I boccali sono prelevati da M camerieri (M<MAX) che provvedono a servirli ai tavoli. Ciascun cameriere può portare 2 boccali per volta, se disponibili, ma, in caso di affollamento, i camerieri preleveranno 3 boccali per volta. Fornire una soluzione con semafori.
+
+1.Scomposizione
+GRUPPO: un gruppo di 5 persone, aspetta che un altro gruppo esca;
+una volta dentro aspetta che il cameriere porti le birre;
+una volta serviti, consumano la birra;
+una volta fatto, lasciano il pub
+BIRRAIO: riempe e mette un numero di boccali < MAX sul bancone;
+aspetta che vengano prelevati;
+CAMERIERE: se il pub è affollato, i camerieri possono prelevare 3 boccali per volta, se invece il pub non è affollato, i camerieri prelevano 2 boccali per volta;
+una volta prelevati si dirigono ai tavoli per servire
+
+
+GRUPPO(int id){
+
+     wait(ingresso);  // aspetta che ci sia spazio per entrare
+     signal(gruppo_ingresso);  // segnala che un gruppo sta entrando
+
+     entra()
+
+     wait(pinta); // aspetta che un camereiere serva il gruppo
+     prendi_pinta() // il gruppo prende le birre
+
+     esci()    // gruppo esce dal pub
+     signal(ingresso);  // libera spazio per il prossimo gruppo
+}
+
+
+BIRRAIO(){
+
+     while(1){
+
+         wait(spazio_bancone) // aspetta ci sia spazio per appoggiare i boccali
+         poggia_pinta()
+         signal(pinta) // segnala la presenza di un boccale pronto
+     }
+}
+
+
+CAMERIERE(int ID){
+
+      while(1){
+
+         wait(pinta) // aspetta che i boccali siano pronti per essere serviti
+         preleva_pinta() // preleva il boccale
+
+         if(affollamento){ // se il pub e' affollamento
+             num_boccali = 3;
+         }else{
+             num_boccali = 2;
+         }
+
+         for(i = 0; i < num_boccali; i++){
+             preleva_pinta()
+         }
+
+         serve_birra()  // serve birra ai tavoli
+      }
+}

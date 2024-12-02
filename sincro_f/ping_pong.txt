@@ -1,0 +1,56 @@
+Durante il campionato mondiale di ping-pong si affrontano i giocatori di Italia e Cina. Il match prevede che si affrontino a turno i 10 giocatori di ciascuna squadra. Tutte le partite possono giocarsi in contemporanea su 10
+tavoli disponibili. I giocatori delle rispettive squadre formano due code prima di entrare nell’area con i tavoli. I giocatori di ambo le squadre sono indolenti e arrivano alla spicciolata, per cui quando arriva un giocatore
+controlla se un giocatore della squadra avversaria è disponibile, in tal caso entrano insieme altrimenti attende.
+Finita la partita i due giocatori sempre alla spicciolata si rimetteranno in coda fino a che ogni giocatore avrà giocato con tutti i giocatori della squadra avversaria.
+
+Giocatore Squadra A(i_a):
+//Deve aspettare di poter avere un tavolo e un avversario
+for(int i = 0; i < 9; i++)
+{
+   //Aspetta nella coda della tua squadra coda_A = 1
+   wait(coda_A)
+   //segnala di essere pronto ad entrare
+   indice_A = i_a
+   signal(giocatore_A_pronto)
+   wait(giocatore_B_pronto)
+   if(buffer[i_a,i_b] == -1)
+    {
+         //La partita è stata decisa
+         buffer[i_a,i_b] = 1
+         signal(coda_A)
+         signal(coda_B)
+         wait(tavolo)
+         {Gioca la partita}
+         signal(fine_partita_A)
+         wait(fine_partita_B)
+    }else
+     {
+         //Non posso giocare e devo aspettare il prossimo giocatore avversario
+         i--
+         buffer[i_a,i_b] = 2
+         signal(fine_parita_A)
+         wait(fine_partita_B)
+         signal(A)
+     }
+
+}
+
+
+Giocatore Squadra B(i_b)
+//Deve aspettare di poter avere un tavolo e un avversario
+for(int i = 0; i < 9; i++)
+{
+   //Aspetta nella coda della tua squadra
+   wait(coda_B)
+   indice_B = i_b
+   signal(giocatore_B_pronto)
+   wait(giocatore_A_pronto)
+   signal(fine_partita_B)
+   wait(fine_partita_A)
+   if(buffer[i_a,i_b] == 2 )
+   {
+     buffer[i_a,i_b] = 1
+     i--
+     signal(B)
+   }
+}

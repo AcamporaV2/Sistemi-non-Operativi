@@ -1,0 +1,59 @@
+In un ristorante più' persone siedono allo stesso tavolo e condividono B1 bottiglie di acqua e B2 bottiglie di vino.La politica della mensa è che un operatore della mensa controlla se terminano le bottiglie e le sostituisce se vuote fino a quando le persone non decidono di lasciare il ristorante.
+Si fornisca una soluzione usando semafori e processi.Discutere la soluzione proposta  in termini di possibili situazioni di starvation/deadlock e,nel caso,si propongano soluzioni ammissibili.
+
+1.Scomposizione
+Persone: bevono acqua e vino, fino a che non finiscono sul tavolo, e aspettando che il cameriere faccia un refill
+Cameriere: controlla se le bottiglie temrinano e le sostituisce se vuote fino a quando le persone non decidono di lasciare il ristorante
+
+
+DATI
+int bottiglia_acqua = B1;  // bottiglie acqua disponibili
+int bottiglia_vino = B2;   // bottiglie vino disponibili
+
+PERSONE(){
+
+    while(1){
+
+        scelta = rand(0, 1); // acqua vale 0 e vino 1
+        if(scelta == 0){
+             wait(sem_acqua); // decremento il semaforo, se e' 0 aspetta fino a quando non ci sara' una bottiglai d'acqua
+
+             wait(mutex_CS);
+             if(bottiglia_acqua > 0){
+                bottiglia_acqua--; // le persono bevono acqua
+             }
+             signal(mutex_CS);
+        }else{
+             wait(sem_vino)
+
+            wait(mutex_CS)
+            if (bottiglia_vino > 0){
+                bottiglia_vino--; // le persone bevono vino
+            }
+            signal(mutex_CS)
+       }
+    }
+}
+
+
+CAMERIERE() {
+    while (1) {
+        wait(mutex_CS);
+
+        if(bottiglia_acqua == 0) { // se le bottiglie d'acqua sono finte
+            bottiglia_acqua = B1; // il cameriere ripristina le bottiglie d'acqua
+            for (int i = 0; i < B1; i++) {
+                signal(sem_acqua); // aggiorno il semaforo indicando che le bottiglie d'acqua sono di nuovo disponibili
+            }
+        }
+
+        if (bottiglia_vino == 0) { // se le bottiglie di vino sono finte
+            bottiglia_vino = B2; // il cameriere ripristina le bottiglie
+            for (int i = 0; i < B2; i++) {
+                signal(sem_vino);// aggiorno il semaforo indicando che le bottiglie di vino sono di nuovo disponibili
+            }
+        }
+
+        signal(mutex_CS);
+    }
+}

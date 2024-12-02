@@ -1,0 +1,44 @@
+Un panettiere produce tre tipi di pane. I clienti del suddetto esercizio, si dispongono in un'unica fila per essere serviti. Al proprio turno, un cliente chiede uno dei tre tipi di pane e se disponibile lo riceve lasciando l'esercizio.
+Nel caso in cui il tipo di pane richiesto non fosse disponibile e non fosse già in preparazione, il panettiere inforna una quantità N del tipo di pane mancante e passa al prossimo cliente. Terminata la cottura, i clienti in attesa vengono serviti in maniera prioritaria rispetto a quelli in fila.
+
+1.Scomposizione
+CLIENTE: cliente va in fila, chiede un tipo di pane,(3 sponibili), se disponibile, lo riceve;
+se il pane non e' disponibile, e non e' in preparazione, deve attendere che viene preparat; se il pane e' in preparazione o gia' disponibile, il cliente riceve il pane e il negozio.
+PANETTIERE: il panettiere se non disponibile il pane richiesto, inforna una quantita' N del tipo di pane mancante e passa al prossimo cliente;
+una volta che il pane è pronto, il panettiere deve servire prima i clienti che avevano richiesto quel pane
+
+CLIENTE(int ID, int tipo){
+
+     signal(arrivo) // il cliente avvisa di essersi aggregato alla fila
+     wait(mutex_CS); // solo un cliente alla volta, accede alla variabile condivisa (tipo_pane)
+
+     if(tipo_pane[tipo] == 0){ // se il pane richiesto non e' disponibile
+        signal(coda_clienti) // il cliente e' in attesa
+        wait(tipo_pane[tipo]) // aspetta che il pane richiesto sia pronto
+     }else{
+        tipo_pane[tipo]--; // il cliente riceve il pane richiesto
+     }
+     signal(mutex_CS);
+}
+
+
+PANETTIERE(){
+
+     while(1){ // il panettiere lavora finche' ci sono clienti
+
+         for(i = 0; i < 3; i++){ // controlla il tipo di pane
+             if(tipo_pane[i] == 0){
+                 wait(coda_clienti); // il panettiere aspetta che ci siano clienti in attesa del tipo di pane
+                 prepara_pane(i) // prepara il tipo di pane richiesto
+
+                 // preparato il pane
+                 for(j = 0; j < N; j++){
+                     signal(pane_tipo[i]); // sblocca i clienti in attesa di quel tipo di pane
+                 }
+             }
+         }
+
+         // nel caso serve i clienti che sono pronti
+         serve_Cliente()
+     }
+}

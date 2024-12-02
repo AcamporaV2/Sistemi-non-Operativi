@@ -1,0 +1,75 @@
+Il chitarrista Mancuso ha una masterclass in cui possono prendere parte N chitarristi, che posso scegliere fra M modelli di chitarre, con K chitarre.
+Quando tutti gli allievi hanno una chitarra, inizia masterclass.
+Gli allievi che non trovano posto, prenderanno parte alla lezione successiva.
+Tutto termina quando non ci sono chitarristi in attesa.
+
+1.Scomnposizione
+CHITARRISTA:aspetta che una chitarra sia disponibile;
+sceglie un modello di chitarra tra quelli disponibili;
+partecipa alla lezione;
+rilascia la chitarra alla fine della lezione.
+MASTERCLASS: controlla quando tutti i chitarristi hanno una chitarra;
+inizia la lezione quando il numero di chitarristi pronti è uguale a N;
+aspetta che tutti completino la lezione prima di ripristinare lo stato.
+
+
+DATI
+N = numero chitarristi
+M = numero modelli di chitarre
+K = numero chitarre disponibili
+
+attesa = 0;
+chitarristi_pronti = 0;
+
+CHITARRISTA(ID){
+
+    wile(1){
+
+       wait(sem_posti)
+       wait(sem_chitarra); // aspetta che una chitarra sia disponibile
+       modello_scelto = scelta(M); // scegli un modello tra quelli disponibili
+
+       wait(sem_modello[modello_scelto]); // aspetta che il modello scelto sia disponibile
+
+       wait(mutex_CS)
+       chitarrista_pronto++; // aumenta il contatore dei chitarristi pronti
+       attesa++; // aumenta il numero di chitarristi in attesa
+       signal(mutex_CS);
+
+       wait(sem_lezione) // aspetta che la lezione inizi, che inizia solo quando tutti i chiatrristi hanno una chitarra
+
+       // inizia la lezione
+       {suona}
+
+       signal(sem_modello[modello_scelto]) // finita la lezione, il chitarrista rilascia il modello
+       signal(sem_chitarra) // segnalazione che la chitarra e' rilasciata e che incrmenta il contatore delle chitarre
+
+       {esce dalla lezione}
+       wait(mutex_CS)
+       attesa--  // diminuisce il numero di chitarristi in attesa
+       if attesa == 0{ // se tutti i chitarristi hanno completato la lezione
+            signal(sem_lezione)
+            signal(mutex_CS)
+       }
+        signal(sem_posti)
+    }
+}
+
+MASTERCLASS(){
+
+   while (1){
+        wait(mutex_CS)
+
+        // se tutti i chitarristi sono pronti, inizia la lezione
+        if chitarrista_pronto == N{
+            // i chitarristi hanno preso una chitarra e sono pronti per la lezione
+            signal(sem_lezione)  // inizia la lezione
+            signal(mutex_CS)
+        }
+
+        wait(mutex_CS)
+        if attesa == 0{  // la masterclass termina se non ci sono chitarristi in attesa
+            exit(0)
+        }
+        signal(mutex_CS)
+}

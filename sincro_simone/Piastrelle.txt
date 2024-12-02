@@ -1,0 +1,66 @@
+    In una fabbrica, N operai preparano piastrelle da far cuocere in un forno, 
+        capace di cuocerne M contemporaneamente.
+
+        All'uscita dal forno K operai visionano le piastrelle per decorarle
+        seguendo questa sequenza di passi:
+            -Se trova una piastrella difettata inizia a prenderne 2 alla volta dal forno;
+            -Altrimenti ne prende 1 alla volta.
+
+mutex : mutex = 1 //mutex per la sezione critica 
+
+semaforo binario:  forno_pieno = 0;
+semaforo binario: forno_vuoto = 0;
+
+Array int piastrella[M] = {0} //Array per contenere le piastrelle
+
+
+//Operaio che cuoce
+
+//  -Prepara M piastrelle
+//  -Inforna M piastrelle
+//
+
+Operaio_Cuoce()
+{
+    wait(forno_vuoto)
+
+    lock(mutex)
+
+        for(i to M)
+           piastrella[i] = metti_piastrella()
+           i++
+    unlock(mutex)
+
+    {cucina le piastrelle}
+
+    signal(forno_pieno)
+}
+
+
+//Operaio che decora
+
+
+//Aspetta che il forno abbia finito
+//Checka le piastrelle 
+//Se sono rotte ne inizia a prendere 2 alla volta
+//Se no ne prende una alla volta 
+
+
+Operaio_Decora()
+{
+    wait(forno_pieno)
+    lock(mutex)
+
+    for (i to M) 
+        piastrella_controllata = piastrella[i]
+
+        if(piastrella == rotta)
+
+            for(j=i to i+2)
+                piastrella[j] = decora() // equivalente a 2 volte decora() per il for
+
+            else 
+                piastrella[i] = decora()
+    unlock(mutex)
+    signal(forno_vuoto)
+}

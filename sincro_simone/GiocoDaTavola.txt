@@ -1,0 +1,6 @@
+N thread generano un numero compreso da 1 a 6. Una volta lanciato il dado devono
+aspettare che tutti gli altri abbiamo terminato per comunicare ad un processo master il
+numero ottenuto dal lancio. Il master si occuperò di decretare il vincitore seguendo le
+seguenti regole:
+1.Il numero generato più alto vince
+2.A parità di numero vince il thread con id minore.

@@ -1,0 +1,78 @@
+Un panettiere produce tre tipi di pane. I clienti del suddetto esercizio, si dispongono in un'unica fila per essere
+    serviti. Al proprio turno, un cliente chiede uno dei tre tipi di pane e se
+    disponibile lo riceve lasciando l'esercizio.
+  Nel caso in cui il tipo di pane richiesto non fosse disponibile e non fosse già in preparazione, il panettiere inforna
+    una quantità N del tipo di pane mancante e passa al prossimo cliente. Terminata la cottura, i clienti in attesa
+    vengono serviti in maniera prioritaria rispetto a quelli in fila.
+
+
+Panettiere: -Se ci sono persone in fila, controlla i tipi di pane
+            -Se non c'è quel pane lo prepara e aumenta il pane disponibile
+            -Se nessuno aspetta serve il pane ai frati
+
+
+Cliente: - Si mette in fila
+         -Chiede del pane
+         -Se disponibile paga e se ne va
+         -se non disponibile aspetta e poi svolge il passaggio di sopra
+
+
+
+semaforo contatore: Persone_fila = 0
+semaforo binario: turno = 0
+semafoto contatore: pagnottaPresente[3] = M 
+semaforo binario: scelta = 0
+semafoto contatore: PersoneInAttesa = 0
+
+Cliente()
+{
+    while(1)
+    {
+        entrainfila() //Funzione che indica la persona è entrata nella fila
+
+        signal(Persone_fila) //Segnala che è in fila
+        wait(turno) 
+        wait(pagnottaPresente[i]) //Aspetta il suo turno e chiede la pagnotta 
+
+        if(pagnottaPresente[i]) //Se già presente paga e va via
+        {
+            paga()
+            esci()
+        }else{  
+            //Se non è presente aspetta che sia disponibile e poi va via
+
+            signal(PersoneInAttesa)
+            wait(pagnottaPresente[i])
+            paga()
+            esci()
+        }
+    }
+
+}
+
+
+panettiere()
+{
+    while(1)
+    {
+        if(PersoneInAttesa) //se ci sono persone in attesa perchè pane X non è disponibile
+        {
+            for(i=1 to 3)
+            {
+                wait(pagnottaPresente[i])
+                
+                preparapagnotta()
+                infornapagnotta() //Prepara e inforna la pagnotta
+
+                riempiPagnotta();// aumenta il numero di pagnotta i-esima
+
+                for(i=0 to N) 
+                {
+                    signal(pagnottaPresente[i]);
+                }
+            }
+        }else{
+            servicliente(); //Asfaltisti per la tua casa
+        }
+    }
+}

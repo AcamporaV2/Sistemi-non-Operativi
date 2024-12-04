@@ -1,0 +1,59 @@
+In una biblioteca universitaria possono entrare e trovare posto
+seduto al più N studenti. Ogni studente che ha trovato posto può
+richiedere al bibliotecario un volume degli M a disposizione,
+considerando che per ogni volume ci sono K copie
+
+//Variabili globali
+
+int N //Numero posti disponibili 
+int K //Numero copie di un volume
+int M //Numero volumi disponibili
+
+posto_disponibile = N //Semafoto contatore per i posti disponibili
+Copia_volume[M]= K //Semafoto contatore per le copie disponibili
+
+segnalato = 0 //Semafoto per segnalare la richiesta del volume 
+
+accesso_risorse := 1;  // Semaforo binario usato per la mutua esclusione
+
+
+
+
+bibliotecario:
+
+repeat
+    wait(segnalato)
+    {prende volume}
+    {consegna volume}
+    signal(segnalato)
+forever
+
+
+
+
+studenti:
+
+ wait(posto_disponibile)  //Aspetta un posto vuoto
+
+ {si siede e sceglie cosa leggere}
+ 
+ scelta = rand(1,M);  //Scelta del volume random da 1 a M
+
+ wait(Copia_volume[scelta]) //Vede se la copia è libera 
+
+    wait(accessorisose) 
+    -----------------------------------------
+    signal(segnalato)
+
+    wait (segnalato)
+    -------------------------------------------
+    signal(accessorisose)
+
+ {legge il volume}
+ {consegna il volume}
+
+ signal(Copia_volume[scelta])
+
+ {va a fottersi}
+
+ signal(posto_disponibile)

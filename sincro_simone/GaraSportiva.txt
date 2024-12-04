@@ -1,0 +1,77 @@
+In una manifestazione sportiva scolastica di atletica ci sono diversi gruppi di due squadre di atleti, composte
+ciascuna da N mezzofondisti. La gara consiste in una staffetta, dove i corridori di due squadre, chiamiamole A e
+B, devono passarsi un testimone per completare il percorso. Tuttavia, c'è una regola: un corridore della squadra
+A può passare il testimone solo a un corridore della squadra B e viceversa. La gara termina dopo che tutti i
+corridori hanno completato la staffetta correttamente. Vince la coppia di squadre che impiega meno tempo.
+Utilizzare semafori e mutex per gestire correttamente il passaggio del testimone tra i corridori delle due squadre.
+
+mutex: Passaggio_mutex = 1; //Mutex per la mutua esclusione
+
+//Ipoteticamente partono tutti da 0 perchè magari potrebbe iniziare o A o B non lo decidiamo prima
+Semaforo Binario: testimone_A = 0 //Semaforo binario per il testimone di A 
+Semaforo Binario: testimone_B = 0 //Semaforo binario per il testimone di B
+
+int N //numero corridori
+int tempo_A //tempo di squadra A  
+int tempo_B //tempo di squadra B
+
+int tempo_corridore //Tempo del singolo corridore di ognuna delle squadra 
+
+
+main()
+{
+    
+
+    for(i=0 to N)
+    {
+        creaCorridoreA()
+        creaCorridoreB()
+    }
+
+    int numero = rand() % 2; // Decide a caso quale squadra inizia
+
+    if (numero == 1) {
+        signal(testimone_A); // La squadra A inizia
+    } else {
+        signal(testimone_B); // La squadra B inizia
+    }
+
+    determinareVincitore(); //decide il vincitore 
+
+}
+
+SquadraA()
+{
+    while(1)
+    {
+        wait(testimone_A)
+
+        lock(Passaggio_mutex)
+
+        tempo_corridore = corri(); // La funzione 'corri' restituisce il tempo impiegato dal corridore
+        tempo_A += tempo_corridore; // Aggiungi il tempo del corridore alla squadra A
+
+        unlock(Passaggio_mutex)
+
+        signal(testimone_B)
+    }
+
+}
+
+
+SquadraB()
+{
+    while(1)
+    {
+        wait(testimone_B)
+
+        lock(Passaggio_mutex)
+
+        tempo_corridore = corri(); // La funzione 'corri' restituisce il tempo impiegato dal corridore
+        tempo_B += tempo_corridore; // Aggiungi il tempo del corridore alla squadra A
+
+        unlock(Passaggio_mutex)
+
+        signal(testimone_A)
+    }
+}

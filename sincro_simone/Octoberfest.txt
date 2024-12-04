@@ -1,0 +1,105 @@
+In un pub tedesco durante l’Oktoberfest, è consentito l’ingresso solo a gruppi di cinque avventori dopo che un
+altro gruppo di cinque ha lasciato il pub, nel momento di maggiore affollamento. Una volta entrati, N birrai
+pongono continuamente boccali di birra di volta in volta in un bancone che può contenere MAX boccali. I boccali
+sono prelevati da M camerieri (M<MAX) che provvedono a servirli ai tavoli. Ciascun cameriere può portare 2
+boccali per volta, se disponibili, ma, in caso di affollamento, i camerieri preleveranno 3 boccali per volta. Fornire
+una soluzione con semafori.
+
+
+Gruppi_persone: -Entrano
+                -Bevono
+                -Vanno via
+
+Birraio:        -Fanno birre
+
+Cameriere:      -controlla se il posto è affollato e decide come consegnare
+                -preleva il numero di boccali dal bancone rispetto a come sta il locale
+                -consegna
+-------------------------------------------------------------------------------------------------------------------------
+semaforo contatore: posto_pub=5; //Semaforo contatore per il numero di 
+semaforo contatore: boccali_disponibili = 0 //Semaforo contatore per il numero di boccali disponibili
+
+mutex: mutex_bancone = 1; //Mutex
+
+int boccali_bancone = 0; 
+
+
+//Utilizzati più nel main quando generiamo le istanze 
+int MAX //Numero di gruppi 
+int M //camerieri (a nero)
+int N //birrai
+
+
+
+
+
+
+Birraio()
+{
+    while(1)
+    {
+        Produce_boccale() //Funzione che crea un boccale 
+        lock(mutex_bancone)
+
+        if(boccali_bancone < MAX )
+        {
+            boccali_bancone++;
+            signal(boccali_disponibili)
+        }
+        unlock(mutex_bancone)
+        
+    }
+
+
+}
+
+
+Cameriere()
+{
+    while(true)
+    {
+        int boccali_da_dare
+        
+        lock(mutex_bancone)
+
+        //Se il bancone ha numero boccali maggiore di un numero MAX/2 di gruppi 
+        if(boccali_bancone > MAX/2) 
+        {
+            boccali_da_dare = 3 //Il posto è affollato 
+
+        } else {
+
+            boccali_da_dare = 2 
+        }
+
+        unlock(mutex_bancone)
+    
+        //Preleva i boccali 
+        for(i=0 to boccali_da_dare)
+        {
+            wait(boccali_disponibili)
+\\
+            lock(mutex_bancone)
+            boccali_bancone--;
+            unlock(mutex_bancone)
+        }
+
+        servi_tavoli() //Comunque so pagati a nero signor finanziere
+    }
+
+}
+
+
+gruppo_persone()
+{
+
+    wait(posto_pub) //Aspetta il posto
+
+
+    //Ipoteticamente potrei fare l'ordine con una variabile rand() e un for con signal però essendo che il birraio continua a fare birre 
+    //e ho messo il cameriere che continua a consegnare non saprei
+
+    {4 birre a bellini}
+
+    signal(posto_pub) //va via dal pub e segnala il posto 
+}

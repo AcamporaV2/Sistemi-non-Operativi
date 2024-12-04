@@ -1,0 +1,63 @@
+Si consideri il seguente problema: In un ambulatorio medico lavorano due medici ed un infermiere.
+Inizialmente i due medici sono in attesa dell'arrivo dei pazienti. Un paziente entra nell'ambulatorio e si
+reca dal primo medico libero che esegue la visita medica. Al termine della visita, il medico redige un
+referto che inserisce in un porta documenti con M posizioni. L'infermiere preleva un referto alla volta e
+lo inserisce nel database dell'ambulatorio. Se entrambi i medici sono impegnati, il paziente si
+accomoda nella sala d'aspetto che dispone di N  sedie. Se le N sedie sono tutte occupate, il paziente
+lascia I'ambulatorio.
+
+int M // Costante: posizioni del porta documenti
+int N // Costante: numero di posti nella sala di attesa
+
+// Semaforo binario usato per la segnalazione
+Semaforo binario: paziente_arrivato := 0
+int pazienti_in_attesa := 0
+
+semafoto binario: sem_cs = 1  //Semaforo per la mutua esclusione 
+
+
+//Semafori contatori usati per contare posti liberi, medici liberi 
+Semaforo contatore: posti_liberi := N
+Semaforo contatore: medici_liberi := 2
+
+Array int : referti[M] = 0 //array per referti
+
+Medico()
+{
+    wait(paziente_arrivato)
+    {visita}
+
+}
+
+infermiere()
+{
+
+   while(true)
+   {
+    wait(referti)
+    wait(sem_cs)
+    referti[M] = referti[M]--
+    signal(sem_cs)
+
+    {inserisci il referto nel database}
+   }
+}
+
+Paziente()
+{
+    if(posti_liberi > 0)
+    {
+        wait(posti_liberi) 
+        signal(paziente_arrivato) //segnala di essere arrivato
+        wait(medici_liberi)
+
+
+        {Aspetta per la visita}
+
+        signal(medici_liberi) //Libera il medico 
+        signal(posti_liberi) //Esce dall'ambulatorio
+    } else {
+
+        {esce via dall'ambulatorio}
+    }
+}

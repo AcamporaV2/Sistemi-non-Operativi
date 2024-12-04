@@ -1,0 +1,81 @@
+un'area di servizio dispone di N distributori di benzina, M<N
+addetti al rifornimento di carburante e P<M addetti al cambio
+d'olio. Una nuova macchina arrivata nell'area di servizio, si
+inserisce in una delle code corrispondenti ai distributori. Quando
+arriva il suo turno, comunica all'addetto al rifornimento la quantità
+di carburante e se intende cambiare l'olio. Terminato il
+rifornimento, se richiesto, l'addetto al rifornimento comunica ad
+un addetto al cambio d'olio di effettuare il servizio. In ogni caso,
+finito il rifornimento, l'automobile libera il distributore.
+
+//Variablili
+int P //addetti olio (P<M)
+int M //Addetti carburante (M<N)
+int N //distributori 
+
+Posti_liberi = N //Semaforo contatore posti Posti liberi 
+Benzinaio = M //Semaforo contatore benzinaio 
+Meccanic0 = p //Semaforo contatore meccainici
+
+rifornimento = 0 //Semaforo binario per segnalare il rifornimento 
+cambio_olio = 0 //Semafoto binario per segnalare l'olio
+procedi = 0 //Semaforo binairo per segnalare il continuo
+olio_svolto = 0 //Semaforo binario per segnare la fine dell'olio
+
+------------------------------------------------------------------
+Macchina:
+
+wait(semaforo_cs)
+scelta[i] = rand(0,1)
+signal(semaforo_cs) 
+
+wait(posti_liberi)
+wait(Benzinaio)
+signal(rifornimento)
+wait(rifornimento)
+wait(semaforo_cs)
+
+if(scelta[i]==1)  //Se la scelta è 1 svolge anche il cambio dell'olio 
+{
+    signal(semaforo_cs)
+    wait(Meccanico)
+    signal(procedi)
+    wait(olio_svolto)
+} else {
+    signal(semaforo_cs)
+}
+
+{esci}
+
+signal(posti_liberi)
+
+-------------------------------------------------------------------------
+Benzinaio:
+
+repeat
+    wait(benzina)
+    { fai rifornimento}
+    signal(benzina)
+
+    if(scelta[i]==1)  //Se la scelta è 1 svolge anche il cambio dell'olio 
+    {
+        wait(Meccanico)
+        signal(procedi)
+        wait(olio_svolto)
+    }
+    signal(Benzinaio)
+forever
+
+
+------------------------------------------------------------------------------------
+Meccanico:
+
+repeat
+    wait(cambio_olio)
+
+    wait(procedi)
+    
+    {cambia olio}
+
+    signal(olio_svolto)
+forever

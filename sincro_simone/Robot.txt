@@ -1,0 +1,90 @@
+Nei laboratori di DeepMind a Londra, ci sono N ricercatori che, dopo aver terminato il proprio lavoro,
+ripongono i propri manuali in pila sulla propria scrivania. Una schiera di K < N robot, si muove tra le
+scrivanie per prelevare i manuali e riporli negli slot liberi di tre librerie. Se una libreria non contiene slot
+liberi per tutti i libri che il robot deve riporre, quest’ultimo passa ad esaminare la libreria successiva.
+L’accesso alle librerie deve avvenire in modo esclusivo.
+Una volta che tutti i robot hanno esaminato tutte le librerie e/o riposto tutti i libri, quelli che non sono
+riusciti a riporre i propri libri accedono ad una quarta libreria situata in un’altra stanza, uno per volta, per
+riporre i propri manuali (si assume che l’ultima libreria abbia slot per tutti i libri di ciascun robot).
+Inoltre, questi ultimi robot riprendono il giro delle scrivanie fino a quando non vi sono più manuali sulle
+scrivanie ed accederanno direttamente alla grande libreria nella stanza.
+Si costruisca una soluzione che coordini l’accesso alle librerie da parte dei robot, usando gli opportuni
+meccanismi di sincronizzazione.
+
+Invia un messaggio in #generale
+
+
+-Ricercatore: -Fa la sua ricerca
+              -Segnala i manuali nella scrivania
+
+-Robor:       -Preleva i manuali 
+              -controlla se la libreria non è piena 
+              -Se le librerie sono tutte piene allora ripone nella quarta (spazio infinito circa)
+
+
+mutex: mutex_scrivania = 1;
+mutex: mutex_manuali = 1;
+mutex: mutex_libreria4 = 1; 
+
+manuali_rimanenti = 0;  // Nessun manuale all'inizio
+manuali_da_raccogliere = 0;  // Nessun manuale disponibile all'inizio
+capacita_libreria[0..2] = {5, 5, 5};  // Slot disponibili nelle librerie 1, 2 e 3
+
+
+Semaforo contatore: Semaforo_scrivania = 0 //segnala se ci sono libri 
+
+Ricercatore()
+{
+    while(1)
+    {
+        {lavora}
+
+        lock(mutex_scrivania)
+        manuali_da_raccogliere++ //Aumenta il contatore dei manuali da raccogliere
+        signal(Semaforo_scrivania)
+        unlock(mutex_scrivania)
+    }
+}
+
+Robot(int id)
+{
+    int manuali_raccolti = 0
+    while(1)
+    {
+        wait(Semaforo_scrivania) //Aspetta ci siano manuali 
+
+        lock(mutex_manuali)
+        if(manuali_da_raccogliere > 0) //Se ci sono manuali da raccogliere
+        {
+            manuali_da_raccogliere--
+            manuali_raccolti++
+        }
+        unlock(mutex_manuali)
+
+        while(manuali_raccolti > 0)
+        {
+            index_locale = index
+            for(i=0; i < Numero_librerie; i++)
+            {
+                lock(mutex_manuali)
+                if(capacita_libreria[i] > 0)
+                {
+                    capacita_libreria[i]--
+                    manuali_raccolti--
+                    unlock(mutex_manuali)
+                    break; //Passa al prossimo manuale 
+                }
+                unlock(mutex_manuali) //Dovrebbe passare alla prossima libreria
+            }
+
+
+            // Se nessuna libreria ha spazio, deposita nella libreria 4
+           if (manuali_raccolti > 0) {
+                lock(mutex_libreria4);
+                manuali_raccolti = 0;  // Deposita tutti i manuali raccolti nella libreria 4
+                unlock(mutex_libreria4);
+            }
+        }
+
+    }
+}

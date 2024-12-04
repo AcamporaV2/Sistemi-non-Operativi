@@ -1,0 +1,101 @@
+E' in atto la selezione degli aspiranti della 12a edizione di MasterChef Italia.
+Nel grande salone di attesa possono prendere posto al piu' N aspiranti cuochi,
+  mentre i restanti prenderanno parte alla sessione di prova di cucina successiva.
+Le sessioni previste sono M. Ogni aspirante cuoco che ha trovato posto sara' chiamato nella sala cucina dai tre Chef stellati.
+Nel salone di attesa sono disponibili Z(<N) tavoli da cucina portatili per esercitarsi durante l'attesa,
+  e che ciascun cuoco portera' con se nella sala cucina durante la propria prova.
+I tavoli per le esercitazioni sono distribuiti concorrentemente ai piu' veloci ad accaparrarseli.
+Terminata la prova l'aspirante cuoco lascia la postazione in sala cucina facendo posto al prossimo candidato e rilasciando il tavolo da cucina portatile disponibile
+  per un altro cuoco dell'ultima sessione di prova.
+
+
+
+semaforo contatore: sessioni = M;  //semaforo contatore per le sessioni 
+semaforo contatore: posti = N;     //Semafoto contatore per i posti
+
+
+semafoto contatore: Cuochi_Test = 0; //Semaforo per i cuochi in prova 
+semaforo contatore: Tavoli = Z // Tavoli < N
+
+int cuochi_atetsa = 0; //Variabile per contare i cuochi in attesa
+
+mutex : mutex = 1; //Mutex per la mutua esclusione
+
+Variabile che fa qualcosa : inizio = 0; //Variabile
+
+Cuoco: -Arriva alla selezione
+       -Controlla se c'è un posto, ed entra se è presenta 
+       -Se ha preso posto, svolge la prova 
+       -Esce quando è finita
+
+Chef:  -Aspettano la sessioni
+       -Finchè ci sono cuochi li chiama per farli fare la prova
+
+
+
+
+Cuoco_candidato()
+{
+  //Segnaliamo l'arrivo di un cuoco  
+  lock(mutex)
+  cuochi_atetsa++
+  unlock(mutex)
+
+
+  lock(mutex)
+  //se c'è posto, entriamo
+  if(posti < N)
+  {
+    wait(posti) //Decrementa i posti disponibili 
+
+    wait(tavoli) //Decrementa i tavoli 
+
+    //Se c'è tavolo, posso partecipare alla prova
+    signal(Cuochi_Test)
+
+    wait(inizio)
+
+
+
+    //Libera il tavolo dopo la prova
+    signal(posti)
+    lock(mutex)
+    cuochi_atetsa--
+    unlock(mutex)
+    
+
+    //Esce dalla prova
+    Esci()
+
+  }
+  unlock(mutex)
+
+}
+
+
+
+Chef()
+{
+  //Sessioni è inizializzato a M quindi va da M a 0 con ogni wait 
+  while(sessioni > 0) 
+  {
+
+    wait(sessioni) //Decrementa sessioni
+
+    //Segnala l'inizio della prova
+    for(i to Cuochi_Test)
+    {
+      signal(inizio)
+    }
+
+    while(Cuochi_Test > 0)
+    {
+      wait(Cuochi_Test) //Decrementa cucchi
+
+      //Esegui la prova
+      Esegui_prova();
+    }
+  }
+
+  //Finisce 
+}

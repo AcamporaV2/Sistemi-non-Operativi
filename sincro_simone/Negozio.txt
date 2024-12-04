@@ -1,0 +1,40 @@
+In un negozio Foot Locker, c’è una guardia che si occupa di far
+entrare un numero predefinito di persone alla volta (ad esempio: 1,
+2, N). Quando le persone escono, la guardia ripete il ciclo. Inoltre, ci
+sono potenziali clienti che attendono il loro turno per entrare nel
+negozio, fare acquisti e poi uscire, segnalando la loro uscita.
+
+
+//Variabili globali
+
+persona_ammesse = N  //Semaforo contatore che monitora i posti disponibili
+turno_persona = 0    //Semafoto contatore che segnala il turno della persona che può contare 
+persone_in_fila = 0  //Semaforo contatore che segnala alla guardia quante persone sono in fila
+
+
+Guardia:
+
+while(true)
+{
+
+    wait(persona_in_fila)  //Aspetta persone in fila
+
+    wait(persona_ammesse)  //Aspetta che ci sia posto
+
+    {Fa entrare una persona}
+
+    signal(turno) //Segnala il turno 
+}
+
+
+
+
+Persona:
+
+signal(persona_in_fila) //Segnala di essere in fila 
+
+wait(turno) //Aspetta il turno 
+
+{Svolge le sue cose} //Azione della persona
+
+signal(persona_ammesse) //segnala che esce

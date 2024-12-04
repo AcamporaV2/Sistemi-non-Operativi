@@ -1,0 +1,60 @@
+In un ristorante self-service, i clienti, dopo aver mangiato, dispongono i vassoi in M contenitori,
+ognuno di K ripiani. Periodicamente, un addetto sceglie un contenitore tra quelli in cui ci sono più
+ripiani liberi, lo svuota, lava i piatti e riporta il contenitore in sala.
+
+
+int M // Contenitori 
+int K // K ripiani 
+
+semaforo contatore: Vassoio_Pulito[M] = K
+semaforo contatore: Vassoio_Sporco[M] = 0
+semafoto contatore: contenitori = M 
+
+semafoto binario: sezione_critica = 1  //Semaforo per la mutua esclusione 
+
+
+int index = -1 //index per controllare dove ci troviamo
+int ripiani_sporchi[M] = 0
+
+Client: Entra, controlla se è un contenitore è disponibile, vede se ci sono vassoi disponibili, mangia e posa il vassoio sporco
+
+Cliente()
+{
+    wait(contenitore) //aspetta e vede se un contenitore è libero
+    wait(sezione_critica)
+    contenitore_locale = index++
+    signal(sezione_critica)
+
+    wait(Vassoio_Pulito[contenitore_locale])
+    wait(sezione_critica)
+    index = index--
+    signal(sezione_critica)
+    signal(contenitore)
+
+    {mangio}
+
+    -----------------------------------------------------------------------
+    Sopra sezione relativa a mangiare, sotto per posare 
+    -----------------------------------------------------------------------
+
+    wait(contenitore)
+    wait(sezione_critica)
+    contenitore_locale = index++
+    signal(sezione_critica)
+
+    signal(Vassoio_Sporco[contenitore_locale])
+
+    {poso il vassioi}
+
+    wait(sezione_critica)
+    ripiani_sporchi[contenitore_locale] = ripiani_sporchi[contenitore_locale]++
+    index = index--
+    signal(sezione_critica)
+    signal(contenitore)
+
+
+    {esci dal ristorante}
+}
+
+
+Addetto

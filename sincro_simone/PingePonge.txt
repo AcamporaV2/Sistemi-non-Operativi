@@ -1,0 +1,69 @@
+Durante il campionato mondiale di ping-pong si affrontano i giocatori di Italia e Cina. Il match prevede che si
+affrontino a turno i 10 giocatori di ciascuna squadra. Tutte le partite possono giocarsi in contemporanea su 10
+tavoli disponibili. I giocatori delle rispettive squadre formano due code prima di entrare nell’area con i tavoli. I
+giocatori di ambo le squadre sono indolenti e arrivano alla spicciolata, per cui quando arriva un giocatore
+controlla se un giocatore della squadra avversaria è disponibile, in tal caso entrano insieme altrimenti attende.
+Finita la partita i due giocatori sempre alla spicciolata si rimetteranno in coda fino a che ogni giocatore avrà
+giocato con tutti i giocatori della squadra avversaria.
+
+
+
+Giocatore Italia: -Se una giocatore cinese è disponibile, gioca 
+                  -Se non è disponibile, aspetta 
+                  -Continua fin quando non gioca contro ogni giocatore della squadra avversaria
+
+Giocatore cina: -Stessa cosa di sopra 
+semaforo binario: mutex_coda = 1;          // Mutex unico per proteggere code e contatori
+
+semaforo contatore: giocatore_ita = 0;  // Semaforo contatore per italiani in attesa
+semaforo contatore: giocatore_cina = 0; // Semaforo contatore per cinesi in attesa
+
+int contatore_cinesi = 0;       // Variabile per il numero di cinesi in attesa
+int contatore_italiani = 0;     // Variabile per il numero di italiani in attesa
+
+int Partite[10][10] = {0};      // Array 2D per tracciare le partite
+
+void giocatore_italiano(int id) {
+    for (int avversario = 0; avversario < 10; avversario++) { // Cicla sugli ID dei cinesi
+        wait(mutex_coda);  // Proteggiamo accesso a contatori e coda
+
+        if (contatore_cinesi > 0 && Partite[id][avversario] == 0) { // Controlla se ci sono cinesi disponibili E la partita non è già stata giocata
+            contatore_cinesi--;  // Decrementa il contatore dei cinesi
+            signal(giocatore_cina); // Notifica un cinese in attesa
+            signal(mutex_coda);
+
+            giocapartita(id, avversario); // Simula la partita
+            Partite[id][avversario] = 1; // Segna la partita come giocata
+        } else {
+            contatore_italiani++; // Incrementa il contatore degli italiani
+            signal(mutex_coda);
+            wait(giocatore_ita); // Aspetta che un cinese lo notifichi
+        }
+    }
+}
+
+void giocatore_cinese(int id) {
+    for (int avversario = 0; avversario < 10; avversario++) { // Cicla sugli ID degli italiani
+        wait(mutex_coda);  // Proteggiamo accesso a contatori e coda
+
+        if (contatore_italiani > 0 && Partite[avversario][id] == 0) { // Controlla se ci sono italiani disponibili E la partita non è già stata giocata
+            contatore_italiani--;  // Decrementa il contatore degli italiani
+            signal(giocatore_ita); // Notifica un italiano in attesa
+            signal(mutex_coda);
+
+            giocapartita(avversario, id); // Simula la partita
+            Partite[avversario][id] = 1; // Segna la partita come giocata
+        } else {
+            contatore_cinesi++; // Incrementa il contatore dei cinesi
+            signal(mutex_coda);
+            wait(giocatore_cina); // Aspetta che un italiano lo notifichi
+        }
+    }
+}
+
+void main() {
+    for (int i = 0; i < 10; i++) {
+        creaItaliano(i); // Crea i giocatori italiani
+        creaCinese(i); // Crea i giocatori cinesi
+    }
+}

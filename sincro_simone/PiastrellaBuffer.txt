@@ -1,0 +1,78 @@
+    In una fabbrica, N operai preparano piastrelle da far cuocere in un forno, 
+        capace di cuocerne M contemporaneamente.
+
+        All'uscita dal forno K operai visionano le piastrelle per decorarle
+        seguendo questa sequenza di passi:
+            -Se trova una piastrella difettata inizia a prenderne 2 alla volta dal forno;
+            -Altrimenti ne prende 1 alla volta.
+
+
+#define M 10   // Ad esempio, capacità del forno = 10 piastrelle
+
+int buffer[M] = {0}; // Buffer che rappresenta il forno
+int in = 0;    // Indice per il produttore (cucina)
+int out = 0;   // Indice per il consumatore (decora)
+
+// Semafori (l'implementazione dei semafori dipende dalla libreria usata)
+semaphore vuoto = M;  // Inizialmente tutte le posizioni sono vuote
+semaphore pieno = 0;   // Nessuna piastrella cotta nel buffer
+semaphore mutex = 1;  // Per accesso in mutua esclusione al buffer
+
+
+void Operaio_Cuoce() {
+    while (1) {
+        int tile;
+        
+        if (rand() % 2 == 0)
+            tile = 1;  // non difettosa
+        else
+            tile = 2;  // difettosa
+
+        wait(vuoto);
+        wait(mutex);
+
+            buffer[in] = tile;  // Inserisce la piastrella nel buffer
+            in = (in + 1) % M;    // Avanza in maniera circolare
+
+        signal(mutex);
+        signal(pieno);  // Segnala che c'è una nuova piastrella pronta
+    }
+}
+
+
+
+void Operaio_Decora() {
+    while (1) {
+        int tile;
+
+        // Preleva una piastrella dal buffer
+        wait(pieno);      // Attende che ci sia almeno una piastrella nel buffer
+        wait(mutex);     // Entra in sezione critica per accedere al buffer
+            tile = buffer[out];   // Legge la piastrella in posizione 'out'
+            buffer[out] = 0;      // Marca la posizione come vuota
+            out = (out + 1) % M;    // Aggiorna l'indice in modo circolare
+        signal(mutex);   // Esce dalla sezione critica
+        signal(vuoto);   // Incrementa il numero di spazi liberi nel buffer
+
+        // Ora controllo se la piastrella era difettosa o meno
+        if (tile == 2) {
+            // La piastrella è difettosa, quindi l'operatore deve prelevarne un'altra
+            int tile2;
+            wait(full);      // Attende che ci sia un'altra piastrella disponibile
+            wait(mutex);     // Accede in mutua esclusione al buffer
+                tile2 = buffer[out];   // Preleva la seconda piastrella
+                buffer[out] = 0;       // Segna la posizione come vuota
+                out = (out + 1) % M;     // Aggiorna l'indice in modo circolare
+            signal(mutex);
+            signal(empty);   // Libera un'altra posizione nel buffer
+
+        [DECORA LE 2 PIASTRELLE]
+           
+        }
+        else {
+        
+            // [DECORA LA PIASTRELLA]
+            //E' stata presa prima quindi non si svolge altro
+        }
+    }
+}

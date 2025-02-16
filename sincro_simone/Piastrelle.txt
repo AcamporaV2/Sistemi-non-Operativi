@@ -6,12 +6,12 @@
             -Se trova una piastrella difettata inizia a prenderne 2 alla volta dal forno;
             -Altrimenti ne prende 1 alla volta.
 
-mutex : mutex = 1 //mutex per la sezione critica 
 
-semaforo binario:  forno_pieno = 0;
-semaforo binario: forno_vuoto = 0;
+int : max_forno = M 
 
-Array int piastrella[M] = {0} //Array per contenere le piastrelle
+semaforo contatore:  disponibilità_forno = M;
+semaforo contatore: piastrelle_pronte = 0;
+
 
 
 //Operaio che cuoce
@@ -22,18 +22,14 @@ Array int piastrella[M] = {0} //Array per contenere le piastrelle
 
 Operaio_Cuoce()
 {
-    wait(forno_vuoto)
-
-    lock(mutex)
-
-        for(i to M)
-           piastrella[i] = metti_piastrella()
-           i++
-    unlock(mutex)
+    while(1)
+    {
+    wait(disponibilità_forno)
 
     {cucina le piastrelle}
 
-    signal(forno_pieno)
+    signal(piastrelle_pronte)
+    }
 }
 
 
@@ -48,19 +44,22 @@ Operaio_Cuoce()
 
 Operaio_Decora()
 {
-    wait(forno_pieno)
-    lock(mutex)
+    while(1)
+    {
+        difetto = rand()%2;
 
-    for (i to M) 
-        piastrella_controllata = piastrella[i]
-
-        if(piastrella == rotta)
-
-            for(j=i to i+2)
-                piastrella[j] = decora() // equivalente a 2 volte decora() per il for
-
-            else 
-                piastrella[i] = decora()
-    unlock(mutex)
-    signal(forno_vuoto)
+        if(difetto = 1)
+        {
+            wait(piastrelle_pronte)
+            wait(piastrelle_pronte)
+            [DECORA LA PIASTRRETLLA]
+            signal(disponibilità_forno)
+            signal(disponibilità_forno)
+        } else 
+        {
+            wait(piastrelle_pronte);
+            [DECORA LA PIASTRRETLLA]
+            signal(disponibilità_forno);
+        }
+    }
 }

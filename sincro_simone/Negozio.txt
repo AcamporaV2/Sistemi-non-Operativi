@@ -5,36 +5,40 @@ sono potenziali clienti che attendono il loro turno per entrare nel
 negozio, fare acquisti e poi uscire, segnalando la loro uscita.
 
 
-//Variabili globali
+// Variabili globali
+posti_disponibili = N    // Semaforo: numero di posti disponibili nel negozio
+permesso_entrare = 0     // Semaforo: indica chi ha il permesso di entrare
+clienti_in_attesa = 0    // Semaforo: numero di clienti in attesa di entrare
 
-persona_ammesse = N  //Semaforo contatore che monitora i posti disponibili
-turno_persona = 0    //Semafoto contatore che segnala il turno della persona che può contare 
-persone_in_fila = 0  //Semaforo contatore che segnala alla guardia quante persone sono in fila
-
-
-Guardia:
-
-while(true)
+Guardia()
 {
+    while(true)
+    {
+        // Aspetta che ci siano clienti in attesa
+        wait(clienti_in_attesa);
 
-    wait(persona_in_fila)  //Aspetta persone in fila
+        // Aspetta che ci sia posto nel negozio
+        wait(posti_disponibili);
 
-    wait(persona_ammesse)  //Aspetta che ci sia posto
+        // Fa entrare una persona
+        { Fa entrare una persona }
 
-    {Fa entrare una persona}
-
-    signal(turno) //Segnala il turno 
+        // Segnala alla prossima persona in fila che può entrare
+        signal(permesso_entrare);
+    }
 }
 
+Persona()
+{
+    // Segnala di essere in fila
+    signal(clienti_in_attesa);
 
+    // Aspetta il permesso di entrare
+    wait(permesso_entrare);
 
+    // Esegue le proprie azioni all'interno del negozio
+    { Svolge le sue cose }
 
-Persona:
-
-signal(persona_in_fila) //Segnala di essere in fila 
-
-wait(turno) //Aspetta il turno 
-
-{Svolge le sue cose} //Azione della persona
-
-signal(persona_ammesse) //segnala che esce
+    // Segnala che esce, liberando un posto
+    signal(posti_disponibili);
+}

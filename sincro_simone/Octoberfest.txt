@@ -6,7 +6,7 @@ boccali per volta, se disponibili, ma, in caso di affollamento, i camerieri prel
 una soluzione con semafori.
 
 
-Gruppi_persone: -Entrano
+    Gruppi_persone: -Entrano
                 -Bevono
                 -Vanno via
 

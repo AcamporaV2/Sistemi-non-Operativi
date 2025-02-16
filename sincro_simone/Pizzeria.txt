@@ -1,0 +1,69 @@
+In una pizzeria, due pizzaioli sfornano continuamente pizze che
+pongono di volta in volta in uno di N piatti disponibili su un bancone.
+I piatti sono prelevati da M (M<N) camerieri che provvedono a
+servirle ai tavoli. Ciascun cameriere può portare:
+• 2 pizze per volta, se disponibili;
+• in caso di affollamento, i camerieri preleveranno 3 pizze per volta.
+
+piatti : const int = N;
+camerieri : const int = M; // M<N
+max_clienti : const int = K;
+
+num_pizze : int = 0;
+num_clienti : int = 0;
+sem_CS : semaforo = 1;
+sem_pizze : semaforo = 0;
+
+Pizzaiolo()
+{
+    while(1)
+    {
+        wait(sem_CS);
+        if(num_pizze < piatti)
+        {
+            num_pizze++;
+            signal(sem_pizze); // Notifica una nuova pizza
+        }
+        signal(sem_CS);
+        // Produci la pizza
+    }
+}
+
+Cameriere()
+{
+    while(1)
+    {
+        int pizze_da_portare;
+        wait(sem_CS);
+        if(num_clienti >= max_clienti)
+            pizze_da_portare = 3;
+        else
+            pizze_da_portare = 2;
+        
+        if(num_pizze >= pizze_da_portare)
+        {
+            num_pizze -= pizze_da_portare;
+            signal(sem_CS);
+            // Porto le pizze (es. 2 o 3)
+        }
+        else
+        {
+            signal(sem_CS);
+            // Aspetta finché non ci sono abbastanza pizze
+            wait(sem_pizze);
+        }
+    }
+}
+
+Cliente()
+{
+    wait(sem_CS);
+    num_clienti++;
+    signal(sem_CS);
+    
+    [Mangia la pizza]
+    
+    wait(sem_CS);
+    num_clienti--;
+    signal(sem_CS);
+}

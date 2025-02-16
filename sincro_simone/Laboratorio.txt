@@ -1,0 +1,94 @@
+Un laboratorio di ricerca è dotato di N postazioni, di cui K a
+disposizione del personale di tipo «A» e le rimanenti N-K a disposizione
+del personale di tipo «B». L’accesso al laboratorio è gestito da un
+coordinatore che assegna le postazioni secondo la seguente politica:
+un utente di tipo «A» accede al laboratorio solo se una delle K
+postazioni è libera, altrimenti va via; un utente di tipo «B» accede al
+laboratorio solo se una delle N-K postazioni è libera, altrimenti si mette
+in attesa. Le postazioni riservate agli utenti di tipo «B» non possono
+essere occupate per più di M minuti, alla scadenza dei quali l’utente
+libera la postazione.
+
+
+// Semafori e variabili condivise
+semaforo_binario mutex_postazioni = 1;       // Inizialmente 1
+semaforo_binario semaforo_coordinatore = 0;   // Inizialmente 0
+semaforo_contatore semaforo_richiesta_B = 0;    // Inizialmente 0
+
+int postazioni_A = K;           // Postazioni riservate ad "A"
+int postazioni_B = N - K;       // Postazioni riservate a "B"
+int richieste_B = 0;            // Richieste pendenti degli utenti "B"
+
+
+Utente_A() {
+    wait(mutex_postazioni);
+    if (postazioni_A > 0) {
+        postazioni_A--;           // Occupa direttamente una postazione
+        signal(mutex_postazioni);
+
+        // Lavora per un tempo indefinito
+        { ... }
+
+        // Libera la postazione
+        wait(mutex_postazioni);
+        postazioni_A++;
+        signal(mutex_postazioni);
+    } else {
+        // Nessuna postazione libera: l'utente va via (non attende)
+        signal(mutex_postazioni);
+        // [L'utente esce senza fare richiesta]
+    }
+}
+Utente_B() {
+    wait(mutex_postazioni);
+    if (postazioni_B > 0) {
+        postazioni_B--;           // Occupa direttamente una postazione
+        signal(mutex_postazioni);
+
+        // Lavora per al massimo M minuti
+        { ... }
+
+        // Libera la postazione e notifica il coordinatore (per eventuali richieste in attesa)
+        wait(mutex_postazioni);
+        postazioni_B++;
+        signal(semaforo_coordinatore);
+        signal(mutex_postazioni);
+    } else {
+        // Nessuna postazione libera: l'utente fa richiesta al coordinatore
+        richieste_B++;
+        signal(semaforo_coordinatore);
+        signal(mutex_postazioni);
+
+        // Attende che il coordinatore assegni una postazione
+        wait(semaforo_richiesta_B);
+
+        // Lavora per al massimo M minuti
+        { ... }
+
+        // Libera la postazione e notifica il coordinatore
+        wait(mutex_postazioni);
+        postazioni_B++;
+        signal(semaforo_coordinatore);
+        signal(mutex_postazioni);
+    }
+}
+
+
+
+
+Coordinatore() {
+    while (1) {
+        // Attende che ci sia una richiesta (da un Utente_B o una notifica di liberazione)
+        wait(semaforo_coordinatore);
+
+        wait(mutex_postazioni);
+        if (richieste_B > 0 && postazioni_B > 0) {
+            postazioni_B--;       // Assegna una postazione
+            richieste_B--;        // Decrementa il numero di richieste in attesa
+            signal(semaforo_richiesta_B);  // Notifica un utente "B"
+        }
+        // Se non vi sono richieste o postazioni libere, non si fa nulla.
+        signal(mutex_postazioni);
+    }
+}
+

@@ -4,3 +4,61 @@ numero ottenuto dal lancio. Il master si occuperò di decretare il vincitore seg
 seguenti regole:
 1.Il numero generato più alto vince
 2.A parità di numero vince il thread con id minore.
+
+N = 10
+
+array risultato[N]
+array id_thread[N]
+
+semaforo contatore: Count = 0
+semaforo binario: mutex = 1 
+semaforo binario: sblocco = 0
+
+
+Thread(id)
+{
+    wait(mutex)
+
+    risultati[id] = rand() % 6 +1
+    id_thread[id] = id 
+
+    Count += 1 
+    if(count == N)
+    {
+        signal(sblocco)
+    }
+    signal(mutex)
+
+
+    wait(sblocco) // se è 0 ti blocchi qui 
+    signal(sblocco)
+}
+
+
+Master()
+{
+    //si sblocca così calcola tutto
+    wait(sblocco)
+
+    id_vincitore = 0
+    max = risultato[0]
+
+
+    wait(mutex) 
+
+    for (i = 1 to N-1)
+    {
+        if(risultati[i] > max)
+        {
+            max= risultati[i]
+            id_vincitore = id_thread[i]
+            signal(mutex)\\
+        }
+        else if( risultati[i] == max && id_thread[i] < id_vincitore)
+        {
+            vincitore_id = id_thread[i]
+            signal(mutex)
+        }
+    }
+    signal(mutex)
+}

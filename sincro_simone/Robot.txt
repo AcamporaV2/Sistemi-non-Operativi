@@ -22,69 +22,89 @@ Invia un messaggio in #generale
               -Se le librerie sono tutte piene allora ripone nella quarta (spazio infinito circa)
 
 
-mutex: mutex_scrivania = 1;
-mutex: mutex_manuali = 1;
-mutex: mutex_libreria4 = 1; 
+// Semafori per la mutua esclusione e per il conteggio
+semaforo_binario mutex_scrivania    = 1;       // Protegge l’accesso alla scrivania
+semaforo_binario mutex_manuali      = 1;       // Protegge la variabile manuali_da_raccogliere
+semaforo_contatore  sem_scrivania   = 0;       // Segnala la presenza di manuali sulla scrivania
 
-manuali_rimanenti = 0;  // Nessun manuale all'inizio
-manuali_da_raccogliere = 0;  // Nessun manuale disponibile all'inizio
-capacita_libreria[0..2] = {5, 5, 5};  // Slot disponibili nelle librerie 1, 2 e 3
+// Semafori per l'accesso esclusivo alle librerie 1, 2 e 3
+semaforo_binario mutex_libreria[3]  = {1, 1, 1};
+
+// Semaforo per la libreria 4 (accesso uno alla volta)
+semaforo_binario mutex_libreria4    = 1;
+
+// Variabili condivise
+int manuali_da_raccogliere = 0;           // Numero di manuali attualmente sulla scrivania
+int capacita_libreria[3]   = {5, 5, 5};     // Numero di slot liberi nelle librerie 1, 2 e 3
+// (Si assume che la libreria 4 abbia capacità infinita)
 
 
 Semaforo contatore: Semaforo_scrivania = 0 //segnala se ci sono libri 
 
 Ricercatore()
 {
-    while(1)
+    while (true)
     {
-        {lavora}
-
-        lock(mutex_scrivania)
-        manuali_da_raccogliere++ //Aumenta il contatore dei manuali da raccogliere
-        signal(Semaforo_scrivania)
-        unlock(mutex_scrivania)
+        // Il ricercatore svolge il proprio lavoro (simulato da Lavora)
+        Lavora();   // es. lavora per un tempo indefinito
+        
+        // Deposita il manuale sulla scrivania
+        wait(mutex_scrivania);
+            wait(mutex_manuali);
+                manuali_da_raccogliere = manuali_da_raccogliere + 1;
+            signal(mutex_manuali);
+            signal(sem_scrivania);  // Segnala che è disponibile un nuovo manuale
+        signal(mutex_scrivania);
     }
 }
 
-Robot(int id)
+Robot(id)
 {
-    int manuali_raccolti = 0
-    while(1)
+    int manuali_raccolti = 0;
+    
+    while (true)
     {
-        wait(Semaforo_scrivania) //Aspetta ci siano manuali 
-
-        lock(mutex_manuali)
-        if(manuali_da_raccogliere > 0) //Se ci sono manuali da raccogliere
-        {
-            manuali_da_raccogliere--
-            manuali_raccolti++
-        }
-        unlock(mutex_manuali)
-
-        while(manuali_raccolti > 0)
-        {
-            index_locale = index
-            for(i=0; i < Numero_librerie; i++)
+        // Attende che sulla scrivania sia disponibile almeno un manuale
+        wait(sem_scrivania);
+        wait(mutex_manuali);
+            if (manuali_da_raccogliere > 0)
             {
-                lock(mutex_manuali)
-                if(capacita_libreria[i] > 0)
-                {
-                    capacita_libreria[i]--
-                    manuali_raccolti--
-                    unlock(mutex_manuali)
-                    break; //Passa al prossimo manuale 
-                }
-                unlock(mutex_manuali) //Dovrebbe passare alla prossima libreria
+                manuali_da_raccogliere = manuali_da_raccogliere - 1;
+                manuali_raccolti = manuali_raccolti + 1;
+               
             }
-
-
-            // Se nessuna libreria ha spazio, deposita nella libreria 4
-           if (manuali_raccolti > 0) {
-                lock(mutex_libreria4);
-                manuali_raccolti = 0;  // Deposita tutti i manuali raccolti nella libreria 4
-                unlock(mutex_libreria4);
+        signal(mutex_manuali);
+        
+        // Finché ha manuali raccolti, tenta di depositarli
+        while (manuali_raccolti > 0)
+        {
+            boolean depositato = false;
+            
+            // Prova le librerie 1, 2 e 3 in ordine
+            for (i = 0; i < 3 and depositato == false; i = i + 1)
+            {
+                wait(mutex_libreria[i]);    // Accesso esclusivo alla libreria i+1
+                    if (capacita_libreria[i] >= manuali_raccolti)
+                    {
+                        // La libreria ha spazio per TUTTI i manuali raccolti
+                        capacita_libreria[i] = capacita_libreria[i] - manuali_raccolti;
+                        manuali_raccolti = 0;
+                        depositato = true;
+            
+                    }
+                signal(mutex_libreria[i]);
+            }
+            
+            // Se nessuna delle librerie 1-3 ha potuto accogliere TUTTI i manuali, deposita tutto nella libreria 4
+            if (depositato == false and manuali_raccolti > 0)
+            {
+                wait(mutex_libreria4);
+                    manuali_raccolti = 0;   // Deposita tutti i manuali nella libreria 4
+                    // (Facoltativo: stampare "Robot id: Deposito i manuali nella Libreria 4")
+                signal(mutex_libreria4);
             }
         }
-
+        
+        // Il robot riprende a girare tra le scrivanie per prelevare altri manuali
     }
 }

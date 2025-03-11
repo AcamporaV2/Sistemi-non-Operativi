@@ -9,15 +9,12 @@
 
 //PUOKKIERE ADDORMENTATO ho perso finalmente la sanità
 
+semaforo candidati = 0  // Indica quanti candidati sono in attesa
+semaforo tavolo = 1      // Indica se il tavolo è libero (1 = libero, 0 = occupato)
+semaforo mutex = 1       // Mutua esclusione per modificare la variabile Attesa
 
-semaforo candidati = N 
-semaforo tavolo = 1
-semaforo mutex = 1
-
-int sedie = K 
-
-int Attesa = 0
-
+int sedie = K  // Numero massimo di candidati in attesa
+int Attesa = 0  // Contatore dei candidati in attesa
 
 candidato()
 {
@@ -26,30 +23,31 @@ candidato()
         wait(mutex)
         if(Attesa < sedie)
         {
-            attesa++
-            signal(candidati)
+            Attesa++
+            signal(candidati)  // Notifica all'intervistatore che c'è un candidato in attesa
             signal(mutex)
-            wait(tavolo)
+            wait(tavolo)  // Attende che il tavolo sia libero per l'intervista
             [INTERVISTA]
-            signal(tavolo)
-        } else
+            signal(tavolo)  // Libera il tavolo dopo l'intervista
+        } 
+        else
         {
             signal(mutex)
-            exit()
+            exit()  // Esce se non c'è posto
         }
     }
 }
 
 intervistatore()
 {
-    while(1)
+    while(true)
     {
-    wait(candidati)
-    wait(mutex)
-    Attesa--
-    signal(mutex)
-    signal(tavolo)
+        wait(candidati)  // Attende un candidato disponibile
+        wait(mutex)
+        Attesa--  // Decrementa il numero di candidati in attesa
+        signal(mutex)
+        
+        [INTERVISTA]
 
-    [intervista ]
     }
 }

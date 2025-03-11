@@ -1,0 +1,105 @@
+* Ogni fumatore esegue ripetutamente un
+* ciclo in cui prepara la sigaretta e poi la fuma. Per preparare una sigaretta ogni fumatore
+* ha bisogno di:
+* - tabacco;
+* - carta;
+* - fiammiferi.
+* Ogni fumatore possiede un solo elemento in quantità illimitata. In particolare,
+* - il fumatore F1 possiede il tabacco;
+* - il fumatore F2 possiede la carta;
+* - il fumatore F3 possiede i fiammiferi.
+* Presso la tabaccheria vi è una quantità infinita di tutti e tre gli elementi. Vi sono tre
+* impiegati, I1, I2 e I3, ognuno responsabile di una solo elemento: tabacco, carta e
+* fiammiferi. Due impiegati alla volta vengono scelti a caso e mettono a disposizione
+* l'elemento di cui sono responsabili. Il fumatore che possiede il terzo elemento può
+* prelevare gli altri due, prepara la sigaretta e la fuma. Quando termina lo segnala agli
+* impiegati i quali ripetono il processo.
+* Si implementi una soluzione che modelli l'attività descritta in C, Java, o pseudo-codice
+* (SOLO per i non iscritti in Ingegneria Informatica) e si descriva la sincronizzazione tra i
+* processi. Si discuta inoltre se la soluzione proposta può presentare rinvio indefinito e/o
+* deadlock.
+
+
+
+// Semafori per sincronizzazione
+carta_tabacco: sem binario = 0        // carta e tabacco disponibili
+tabacco_fiammiferi: sem binario = 0   // tabacco e fiammiferi disponibili
+carta_fiammiferi: sem binario = 0     // carta e fiammiferi disponibili
+terminato: sem binario = 0            // segnale che il fumatore ha terminato
+
+// Impiegati responsabili degli elementi
+impiegato_1: sem binario = 1  // Responsabile del tabacco
+impiegato_2: sem binario = 1  // Responsabile della carta
+impiegato_3: sem binario = 1  // Responsabile dei fiammiferi
+
+// Processo fumatore 1 (possiede il tabacco)
+fumatore_1_process() {
+  while (1) {
+    wait(carta_fiammiferi);  // Aspetta carta e fiammiferi
+    chiudi();                // Prepara la sigaretta
+    fuma();                  // Fuma la sigaretta
+    signal(terminato);       // Notifica agli impiegati che ha terminato
+  }
+}
+
+// Processo fumatore 2 (possiede la carta)
+fumatore_2_process() {
+  while (1) {
+    wait(tabacco_fiammiferi); // Aspetta tabacco e fiammiferi
+    chiudi();                 // Prepara la sigaretta
+    fuma();                   // Fuma la sigaretta
+    signal(terminato);        // Notifica agli impiegati che ha terminato
+  }
+}
+
+// Processo fumatore 3 (possiede i fiammiferi)
+fumatore_3_process() {
+  while (1) {
+    wait(carta_tabacco); // Aspetta carta e tabacco
+    chiudi();            // Prepara la sigaretta
+    fuma();              // Fuma la sigaretta
+    signal(terminato);   // Notifica agli impiegati che ha terminato
+  }
+}
+// Processo impiegati (tabaccaio coordinato)
+impiegati_process() {
+  while (1) {
+    int i1, i2;
+
+    // Seleziona due impiegati casualmente
+    do {
+      i1 = rand(1, 3);
+      i2 = rand(1, 3);
+    } while (i1 == i2); // Assicurati che siano due impiegati diversi
+
+    // Blocca i due impiegati selezionati
+    if (i1 == 1) wait(impiegato_1); // Blocca impiegato 1 (tabacco)
+    if (i1 == 2) wait(impiegato_2); // Blocca impiegato 2 (carta)
+    if (i1 == 3) wait(impiegato_3); // Blocca impiegato 3 (fiammiferi)
+
+    if (i2 == 1) wait(impiegato_1); // Blocca impiegato 1 (tabacco)
+    if (i2 == 2) wait(impiegato_2); // Blocca impiegato 2 (carta)
+    if (i2 == 3) wait(impiegato_3); // Blocca impiegato 3 (fiammiferi)
+
+    // Determina i materiali messi a disposizione
+    if ((i1 == 1 && i2 == 2) || (i1 == 2 && i2 == 1)) {
+      signal(carta_tabacco); // Carta e tabacco disponibili
+    } else if ((i1 == 1 && i2 == 3) || (i1 == 3 && i2 == 1)) {
+      signal(tabacco_fiammiferi); // Tabacco e fiammiferi disponibili
+    } else if ((i1 == 2 && i2 == 3) || (i1 == 3 && i2 == 2)) {
+      signal(carta_fiammiferi); // Carta e fiammiferi disponibili
+    }
+
+    // Aspetta che il fumatore notifichi la fine
+    wait(terminato);
+
+    // Sblocca gli impiegati
+    if (i1 == 1) signal(impiegato_1); // Sblocca impiegato 1 (tabacco)
+    if (i1 == 2) signal(impiegato_2); // Sblocca impiegato 2 (carta)
+    if (i1 == 3) signal(impiegato_3); // Sblocca impiegato 3 (fiammiferi)
+
+    if (i2 == 1) signal(impiegato_1); // Sblocca impiegato 1 (tabacco)
+    if (i2 == 2) signal(impiegato_2); // Sblocca impiegato 2 (carta)
+    if (i2 == 3) signal(impiegato_3); // Sblocca impiegato 3 (fiammiferi)
+  }
+}

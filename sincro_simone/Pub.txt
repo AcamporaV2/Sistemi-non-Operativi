@@ -1,0 +1,67 @@
+/*
+	In un antico pub della "perfida" Albione, un gruppo di N giocatori accede concorrentemente ad un tavolo
+	di M posti (con M=N/2) occupato ciascuno da una pinta di birra. Ciascun posto del tavolo condiviso può essere occupato al più da un
+	giocatore alla volta. Un arbitro indica ai giocatori il momento in cui possono contendersi l'accesso alla posizione del tavolo (e della
+	pinta).	Appena lanciato il segnale, tutti i giocatori tentano di accedere ad una posizione. Vince il giocatore che più
+	velocemente	si siede e beve la pinta di birra di 1L. A parità di tempo vince il giocatore più anziano.
+	L'arbitro prende nota del nome del vincitore e reimposta tutto allo stato originale, ossia il tavolo è liberato e
+	il gioco ricomincia. Tutti i giocatori possono partecipare alla contesa ad esclusione del giocatore che nel turno precedente era
+	risultato vincitore. Il gioco termina quando tutti gli N giocatori sono stati almeno una volta vincitori del gioco. 
+*/
+
+
+semaforo mutex = 1
+semaforo posti = M
+semaforo inizio_gioco = 0
+semaforo restart_gioco = 0
+
+Array vincitori[N] = {false}
+
+int vincitori_totali = 0
+
+int ultimo_vincitore = -1
+
+
+
+
+
+Arbitro()
+{
+    while(vincitori_totali < N) //finchè non han vinto tutti gioca
+    {
+        wait(mutex)
+        signal(inizio_gioco)
+        wait(restart_gioco)
+        [RESET TAVOLO]
+        signal(mutex)
+    }
+}
+
+Giocatore( int id)
+{
+    while(!vincitori[id])
+    {
+        wait(ready)
+        if(id == ultimo_vincitore)
+        {
+            continue; //escluso se ha vinto ultimo round
+        }
+
+        wait(posti)
+
+        [GIOCA GIOCO ]
+
+        signal(posti)
+
+        wait(mutex)
+        if( SEI IL VINCITORE NON SO COME FARLO AL MOMENTO)
+        {
+            vincitore[id] = true 
+            vincitori_totali ++
+            ultimo_vincitore = id 
+        }
+        signal(mutex)
+
+        signal(restart_gioco)
+    }
+}

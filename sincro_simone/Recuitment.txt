@@ -1,0 +1,55 @@
+/*
+	Nella sala recruitment di una grande azienda informatica, durante una sessione di interview, possono prendere posto al più N candidati, 
+    mentre i restanti candidati prenderanno parte alla sessione di Interview successiva. 
+    Ogni candidato che ha trovato posto sarà chiamato al tavolo delle interview. 
+    L'addetto alle risorse umane attende fino a che è disponibile un candidato. 
+    Terminata l'intervista il candidato lascia il tavolo e la sala facendo posto al prossimo candidato. 
+    Le sessioni di interview terminano quando non ci sono più candidati in attesa. Proporre una soluzione e discutere eventuali problemi di deadlock.
+*/
+
+//PUOKKIERE ADDORMENTATO ho perso finalmente la sanità
+
+
+semaforo candidati = N 
+semaforo tavolo = 1
+semaforo mutex = 1
+
+int sedie = K 
+
+int Attesa = 0
+
+
+candidato()
+{
+    while(true)
+    {
+        wait(mutex)
+        if(Attesa < sedie)
+        {
+            attesa++
+            signal(candidati)
+            signal(mutex)
+            wait(tavolo)
+            [INTERVISTA]
+            signal(tavolo)
+        } else
+        {
+            signal(mutex)
+            exit()
+        }
+    }
+}
+
+intervistatore()
+{
+    while(1)
+    {
+    wait(candidati)
+    wait(mutex)
+    Attesa--
+    signal(mutex)
+    signal(tavolo)
+
+    [intervista ]
+    }
+}

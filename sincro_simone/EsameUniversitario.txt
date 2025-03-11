@@ -1,0 +1,82 @@
+N studenti devono sostenere un esame universitario. La commisione d'esame è composta
+da due docenti ed un assistente. Ogni studente si reca da uno dei due docenti per sostenere
+l'esame  e, se lo supera, passa dall'assistente per la registrazione. Il numero di studenti in attesa
+di registrare l'esame non deve essere maggiore di K. Nel caso in cui ci siano già K studenti in attesa
+di registrazione, i docenti sospoendono gli esami in attesa che il numero di studenti in attesa sia minore di K/2 + 1
+
+// Dichiarazione delle variabili di sincronizzazione
+semaphore docenti = 2;         // Due docenti disponibili per l'esame
+semaphore assistente = 1;      // Un assistente per la registrazione
+semaphore spazio_attesa = K;    // Limite di studenti in attesa per la registrazione
+mutex mutex = 1;               // Protegge l'accesso alle variabili condivise
+int num_in_attesa = 0;         // Numero corrente di studenti in attesa di registrazione
+semaphore barriera = 0;        // Barriera per sospendere i docenti
+
+// Funzione eseguita dallo studente
+void studente() {
+    
+  //Ipotetica parte dove sono più incerto perchè ripete la parte di docente 
+    wait(docenti);
+    sostenere_esame();       // Lo studente sostiene l'esame
+    signal(docenti);
+
+    // Ingresso nell'area d'attesa per la registrazione
+    wait(spazio_attesa);
+    wait(mutex);
+    num_in_attesa++;         // Incrementa il contatore degli studenti in attesa
+    signal(mutex);
+
+    // Registrazione: attende l'assistente
+    wait(assistente);
+    registrare_esame();      // Registra l'esame
+    signal(assistente);
+
+    // Uscita dall'area d'attesa
+    wait(mutex);
+    num_in_attesa--;         // Decrementa il contatore
+
+     // Se il numero degli studenti in attesa scende sotto la soglia (K/2 + 1),  segnala la barriera per sbloccare i docenti in attesa
+    if(num_in_attesa < (K/2 + 1)) {
+        signal(barriera);
+    }
+    signal(mutex);
+    signal(spazio_attesa);
+}
+
+// Funzione eseguita dai docenti
+void docente() {
+    while(true) {
+
+        // Prima di procedere, il docente controlla il numero di studenti in attesa
+
+        wait(mutex);
+        if(num_in_attesa >= K) {
+            // Se sono presenti K o più studenti, il docente si sospende
+            signal(mutex);
+            wait(barriera);  // Attende che la barriera venga sbloccata dallo studente
+        } else {
+            signal(mutex);
+        }
+
+        // Insicuro perchè porcodio cosa significa ciò
+        wait(docenti);
+        esaminare_studente();
+        signal(docenti);
+    }
+}
+
+
+
+
+//Idk se necessario perchè posso renderla col semaforo in studente voglio farla finita
+assistente()
+{
+    while(true)
+    {
+        wait(assistente)
+
+        [Registra esame]
+
+        signal(assistente)
+    }
+}

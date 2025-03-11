@@ -1,0 +1,47 @@
+// Variabili globali
+semaphore mutex = 1; // Mutex per l'accesso alle risorse condivise
+semaphore Computer[M]; // Semafori per i laptop di ciascun modello
+int Disponibilita_Computer[M] = {K, K, ..., K}; // Numero di laptop disponibili per ogni modello
+int countPC = 0; // Contatore per i candidati che hanno ottenuto un PC
+int candidato_inAttesa = L; // Numero totale di candidati in attesa (L >= N)
+semaphore interview_start = 0; // Semaforo per segnalare l'inizio dell'intervista
+
+// Funzione per i candidati
+procedure candidate(id, Modello) {
+    wait(mutex);
+    if (Disponibilita_Computer[Modello] > 0) {
+        Disponibilita_Computer[Modello]--;
+        countPC++;
+        signal(mutex);
+        wait(Computer[Modello]); // Ottiene un laptop del modello preferito
+    } else {
+        signal(mutex);
+        // Se non ci sono laptop disponibili, il candidato deve aspettare la prossima sessione
+        return;
+    }
+
+    // Controlla se tutti i candidati hanno ottenuto un PC e ci sono ancora candidati in attesa
+    wait(mutex);
+    if (countPC == N && candidato_inAttesa != 0) {
+        signal(interview_start); // Segnala l'inizio dell'intervista
+    }
+    signal(mutex);
+
+    wait(interview_start); // Aspetta che l'intervista inizi
+    signal(interview_start) //Sblocca gli altri 
+    // Inizia l'intervista
+    interview();
+
+    wait(mutex);
+    Disponibilita_Computer[Modello]++;
+    signal(Computer[Modello]); // Rilascia il laptop
+    countPC--;
+    candidato_inAttesa--;
+    signal(mutex);
+}
+
+
+// Funzione per l'intervista
+procedure interview() {
+    // Esegui l'intervista
+}

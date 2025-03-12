@@ -1,0 +1,60 @@
+In un ristorante più persone siedono allo stesso tavolo e condividono B1 bottiglie d'acqua 
+e B2 bottiglie di vino. La poilitica della mensa è che un operatore della mensa controlla
+se terminano le bottiglie e le sostituisce se vuote fino a quanto le persone non decidono
+di lasciare il ristorante.
+
+int scelta 
+int prod_ptr = 0
+int cons_ptr = 0
+
+int B1 //Acqua 
+int b2 //Vino 
+
+Array int Bottiglie[b1+b2] //Penso pure bool possa essere ma come direbbe il saggio "o pigl sol ngool
+
+semaforo persone_sedute = 0
+semaforo richiesta_bottiglia = p 
+semaforo Sem_CS = 1 //Sezione critica 
+
+
+Persone()
+{
+    while(1)
+    {
+    scelta = rand()%2
+    Wait(Sem_CS)
+    if(scelta == 1)
+    {
+        signal(persone_sedute)   //Si siedono 
+        wait(richiesta_bottiglia) //Chiedono bottiglie
+        [Consumo]
+        Bottiglie[cons_ptr] = 0 //
+        cons_ptr = cons_ptr +1 mod(b1+b2)  //Ciclo l'array bottiglie così
+
+        signal(Sem_CS)
+        signal(richiesta_bottiglia)
+    } 
+    else
+    {
+        signal(Sem_CS)
+        exit() //esce 
+    }
+  }
+}
+
+
+
+Operatore()
+{
+    while(1)
+    {
+        wait(persone_sedute)
+        signal(richiesta_bottiglia)
+
+        Bottiglie[prod_ptr] = 1 //Bottiglia presente
+
+        prod_ptr = prod_ptr + 1 mod (b1+b2)
+
+        wait(richiesta_bottiglia) 
+    }
+}

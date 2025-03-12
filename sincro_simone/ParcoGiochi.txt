@@ -1,0 +1,74 @@
+In un parco giochi ci sono 1 Altalena che può essere usata da 1 bambino alla volta, 1 scivolo che può ospitare fino a 3
+bambini alla volta e 1 giostra che può partitre solo quando ci sono esattamente 4 bambini a bordo. 
+I bambini arrivano al parco giochi e scelgono a quale attrazione andare in base alla disponibilità.
+Se un'attrazione è piena o non può essere utilizzata, devono aspettare in coda.
+E' necessario garantire che l'altalena venga usata da un solo bambino alla volta; lo scivolo abbia al massimo
+3 bambini contemporaneamente; la giostra parta solo quando ci sono 4 bambini e rimanga bloccata fino alla fine del giostra.
+Usare i semafori.
+
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-Usare la barriera per la giostra.
+-Una sola entità (bambino). 
+
+LO HA DETTO STAIANO A RICEVIMENTO
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+int attazione //Scelta giostra
+
+semaforo altalena = 1 //Semaforo per altalena
+
+semaforo scivolo  = 3 //Semaforo scivolo 
+
+semaforo mutex = 1 //Sezione critica
+
+semaforo giostraReady = 0 //Semaforo per gestire le 4 persone per la giostra, inizia a 0 perchè vuole che ci siano 4 per iniziare
+
+int countGiostra = 0 //Contatore 
+
+
+
+Bambino()
+{
+    attrazione = rand()%3 +1 //Sceglie la giostra 
+
+    if(attazione == 1) //Altalena
+    {
+        wait(altalena) 
+
+        [Gioca altalena]
+
+        signal(altalena)
+    }
+
+
+    if(attrazione == 2 ) //Scivolo 
+    {
+        wait(scivolo) //Se è a 0 i bambini aspettano
+
+        [usa scivolo]
+
+        signal(scivolo)
+    }
+
+    if(attrazione == 3)
+    {
+        wait(mutex)
+        countGiostra++
+        if(countGiostra == 4)
+        {
+            signal(giostraReady)
+        }
+        signal(mutex)
+
+        wait(giostraReady)
+        signal(giostraReady)
+
+
+        [usa giostra]
+
+        wait(mutex)
+        countGiostra--
+        signal(mutex)
+    }
+}

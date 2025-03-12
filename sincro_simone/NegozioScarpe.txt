@@ -1,0 +1,69 @@
+In un negozio di scarpe c’è un addetto che aiuta i clienti a provare i modelli di scarpe scelti. L’addetto può solo 
+aiutare un cliente per volta di K clienti che possono attendere in negozio, seduti su M sedie (K<M). Quando entra 
+un nuovo cliente, attende su una sedia libera, altrimenti lascia il negozio. L’addetto, in mancanza di clienti, 
+provvede ad aggiornare il database dei nuovi modelli di scarpe arrivati il giorno prima. 
+
+
+
+ int K //Numero max clienti attesa
+
+semaforo sedie = M 
+semaforo mutex = 1
+semaforo Addetto = 0 
+semaforo cliente = 0
+
+int coda = 0
+Cliente()
+{
+    wait(sedie)
+
+    wait(mutex)
+    if(coda < K)
+    {
+        coda++
+        signal(cliente)
+        signal(mutex)
+
+        wait(addetto)
+
+        [Servizio]
+
+        signal(sedie)
+    } 
+    else 
+    {
+        signal(mutex)
+        signal(sedie)  //Le sedie sono M>K quindi il cliente si siede inizialmente e poi se ne va se ci sono già K persone
+
+        exit()
+    }
+}
+
+
+Addetto()
+{
+    while(1)
+    {
+        wait(mutex)
+        if (coda == 0)
+        {
+            signal(mutex)
+
+            [update database]
+
+        }
+        else
+        {
+            signal(mutex)
+            wait(cliente)
+
+            wait(mutex)
+            coda--
+            signal(addetto)
+
+            [aiuta]
+
+            signal(mutex)
+        }
+    }
+}

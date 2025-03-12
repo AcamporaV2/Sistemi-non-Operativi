@@ -5,73 +5,90 @@ A può passare il testimone solo a un corridore della squadra B e viceversa. La 
 corridori hanno completato la staffetta correttamente. Vince la coppia di squadre che impiega meno tempo.
 Utilizzare semafori e mutex per gestire correttamente il passaggio del testimone tra i corridori delle due squadre.
 
-mutex: Passaggio_mutex = 1; //Mutex per la mutua esclusione
+// Inizializzazione delle primitive
+mutex Passaggio_mutex = 1;    // Mutex per proteggere le sezioni critiche
 
-//Ipoteticamente partono tutti da 0 perchè magari potrebbe iniziare o A o B non lo decidiamo prima
-Semaforo Binario: testimone_A = 0 //Semaforo binario per il testimone di A 
-Semaforo Binario: testimone_B = 0 //Semaforo binario per il testimone di B
+// Semafori per gestire il testimone
+Semaforo binario: testimone_A = 0;  
+Semaforo binario: testimone_B = 0;
 
-int N //numero corridori
-int tempo_A //tempo di squadra A  
-int tempo_B //tempo di squadra B
+// Variabili globali
+int N;                  // Numero di corridori per squadra
+int tempo_A = 0;        // Tempo complessivo squadra A
+int tempo_B = 0;        // Tempo complessivo squadra B
+int countA = 0;         // Numero di corridori già eseguiti della squadra A
+int countB = 0;         // Numero di corridori già eseguiti della squadra B
 
-int tempo_corridore //Tempo del singolo corridore di ognuna delle squadra 
-
-
-main()
-{
+main() {
+    // Creazione dei thread per i corridori
+    for (i = 1; i <= N; i++) {
+        creaThread(SquadraA);   // Crea thread per il corridore i della squadra A
+        creaThread(SquadraB);   // Crea thread per il corridore i della squadra B
+    }
     
-
-    for(i=0 to N)
-    {
-        creaCorridoreA()
-        creaCorridoreB()
-    }
-
-    int numero = rand() % 2; // Decide a caso quale squadra inizia
-
-    if (numero == 1) {
-        signal(testimone_A); // La squadra A inizia
+    // Decide casualmente quale squadra parte per prima
+    if (rand() % 2 == 0) {
+        signal(testimone_A);   // La squadra A inizia
     } else {
-        signal(testimone_B); // La squadra B inizia
+        signal(testimone_B);   // La squadra B inizia
     }
-
-    determinareVincitore(); //decide il vincitore 
-
+    
+    // Attesa del completamento di tutti i thread (join)
+    attesa_thread();
+    
+    determinareVincitore();    // Determina la coppia vincente confrontando tempo_A e tempo_B
 }
 
-SquadraA()
-{
-    while(1)
-    {
-        wait(testimone_A)
-
-        lock(Passaggio_mutex)
-
-        tempo_corridore = corri(); // La funzione 'corri' restituisce il tempo impiegato dal corridore
-        tempo_A += tempo_corridore; // Aggiungi il tempo del corridore alla squadra A
-
-        unlock(Passaggio_mutex)
-
-        signal(testimone_B)
+SquadraA() {
+    while (true) {
+        wait(testimone_A);  // Attende il testimone
+        
+        lock(Passaggio_mutex);
+        
+        // Se tutti i corridori di A hanno già corso, non serve più eseguire la corsa
+        if (countA >= N) {
+            // Se la squadra B non ha finito, passa il testimone per far terminare eventuali corridori in attesa
+            if (countB < N)
+                signal(testimone_B);
+            unlock(Passaggio_mutex);
+            break;   // Esce dal ciclo
+        }
+        
+        // Esecuzione della corsa per un corridore di A
+        tempo_corridore = corri();       // Funzione che restituisce il tempo impiegato dal corridore
+        tempo_A += tempo_corridore;       
+        
+        countA++;   // Aggiorna il contatore dei corridori di A
+        
+        // Se la squadra B ha ancora corridori in attesa, passa il testimone
+        if (countB < N)
+            signal(testimone_B);
+        
+        unlock(Passaggio_mutex);
     }
-
 }
 
-
-SquadraB()
-{
-    while(1)
-    {
-        wait(testimone_B)
-
-        lock(Passaggio_mutex)
-
-        tempo_corridore = corri(); // La funzione 'corri' restituisce il tempo impiegato dal corridore
-        tempo_B += tempo_corridore; // Aggiungi il tempo del corridore alla squadra A
-
-        unlock(Passaggio_mutex)
-
-        signal(testimone_A)
+SquadraB() {
+    while (true) {
+        wait(testimone_B);  // Attende il testimone
+        
+        lock(Passaggio_mutex);
+        
+        if (countB >= N) {
+            if (countA < N)
+                signal(testimone_A);
+            unlock(Passaggio_mutex);
+            break;
+        }
+        
+        tempo_corridore = corri();   // Il corridore di B corre
+        tempo_B += tempo_corridore;
+        
+        countB++;   // Aggiorna il contatore dei corridori di B
+        
+        if (countA < N)
+            signal(testimone_A);
+        
+        unlock(Passaggio_mutex);
     }
 }

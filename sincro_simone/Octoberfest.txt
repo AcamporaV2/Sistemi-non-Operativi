@@ -16,90 +16,48 @@ Cameriere:      -controlla se il posto è affollato e decide come consegnare
                 -preleva il numero di boccali dal bancone rispetto a come sta il locale
                 -consegna
 -------------------------------------------------------------------------------------------------------------------------
-semaforo contatore: posto_pub=5; //Semaforo contatore per il numero di 
-semaforo contatore: boccali_disponibili = 0 //Semaforo contatore per il numero di boccali disponibili
-
-mutex: mutex_bancone = 1; //Mutex
-
-int boccali_bancone = 0; 
-
-
-//Utilizzati più nel main quando generiamo le istanze 
-int MAX //Numero di gruppi 
-int M //camerieri (a nero)
-int N //birrai
+semaforo ingressoGruppi = 1       // Solo un gruppo di 5 può entrare alla volta
+semaforo birreDisponibili = 0     // Conta i boccali disponibili nel bancone
+semaforo spazioBancone = MAX      // Indica lo spazio disponibile nel bancone
+mutex accessoBancone = 1          // Per sincronizzare l'accesso al bancone (EQUIVALENTE DI MUTEX OGGI ME LO SENTIVO COSI'
+mutex accessoGruppi = 1           // Per sincronizzare il cambio di gruppo
 
 
 
-
-
-
-Birraio()
-{
-    while(1)
-    {
-        Produce_boccale() //Funzione che crea un boccale 
-        lock(mutex_bancone)
-
-        if(boccali_bancone < MAX )
-        {
-            boccali_bancone++;
-            signal(boccali_disponibili)
-        }
-        unlock(mutex_bancone)
-        
+Processo Birraio() {
+    while (true) {
+        wait(spazioBancone)      // Aspetta spazio libero nel bancone
+        wait(accessoBancone)     // Protegge la scrittura sul bancone
+        // Produce un boccale di birra e lo mette sul bancone
+        signal(accessoBancone)   // Rilascia il bancone
+        signal(birreDisponibili) // Segnala che c'è una birra disponibile
     }
-
-
 }
 
+Processo Cameriere() {
+    while (true) {
+        int boccaliDaPrendere;
 
-Cameriere()
-{
-    while(true)
-    {
-        int boccali_da_dare
-        
-        lock(mutex_bancone)
-
-        //Se il bancone ha numero boccali maggiore di un numero MAX/2 di gruppi 
-        if(boccali_bancone > MAX/2) 
-        {
-            boccali_da_dare = 3 //Il posto è affollato 
-
+        wait(accessoBancone)      // Protegge la lettura del bancone
+        if (birreDisponibili == MAX) {
+            boccaliDaPrendere = 3; // Se il bancone è pieno, prende 3 boccali
         } else {
-
-            boccali_da_dare = 2 
+            boccaliDaPrendere = 2; // Altrimenti prende 2 boccali
+        }
+        signal(accessoBancone)     // Rilascia il bancone
+        
+        for (int i = 0; i < boccaliDaPrendere; i++) {
+            wait(birreDisponibili)  // Aspetta un boccale disponibile
+            signal(spazioBancone)   // Libera spazio sul bancone
         }
 
-        unlock(mutex_bancone)
-    
-        //Preleva i boccali 
-        for(i=0 to boccali_da_dare)
-        {
-            wait(boccali_disponibili)
-\\
-            lock(mutex_bancone)
-            boccali_bancone--;
-            unlock(mutex_bancone)
-        }
-
-        servi_tavoli() //Comunque so pagati a nero signor finanziere
+        // Serve i boccali ai tavoli
     }
-
 }
 
 
-gruppo_persone()
-{
-
-    wait(posto_pub) //Aspetta il posto
-
-
-    //Ipoteticamente potrei fare l'ordine con una variabile rand() e un for con signal però essendo che il birraio continua a fare birre 
-    //e ho messo il cameriere che continua a consegnare non saprei
-
-    {4 birre a bellini}
-
-    signal(posto_pub) //va via dal pub e segnala il posto 
+Processo Avventore() {
+    wait(ingressoGruppi)         // Aspetta di poter entrare con il gruppo
+    // Entra nel pub e consuma birra
+    signal(ingressoGruppi)       // Permette al gruppo successivo di entrare
 }

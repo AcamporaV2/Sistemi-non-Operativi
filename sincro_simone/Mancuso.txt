@@ -1,0 +1,84 @@
+Il chitarrista Mancuso ha una masterclass in cui possono prendere parte N chitarristi, che posso scegliere fra M modelli di chitarre, con K chitarre.
+Quando tutti gli allievi hanno una chitarra, inizia masterclass.
+Gli allievi che non trovano posto, prenderanno parte alla lezione successiva.
+Tutto termina quando non ci sono chitarristi in attesa.
+
+
+semaforo inizio_classe = 0
+semaforo mutex = 1
+semaforo chitarre[M] = {K}
+
+int persone_in_attesa= 0
+int persona_in_aula = 0
+
+
+Chitarrista()
+{
+        wait(mutex)
+    if (chitarristi_in_aula >= N) {
+        chitarristi_in_attesa++  // Se la classe è piena, si mette in attesa
+        signal(mutex)
+        wait(attesa)  // Aspetta il segnale per entrare nella prossima sessione
+    } else {
+        chitarristi_in_aula++
+        signal(mutex)
+    }
+
+    persona_in_aula++
+    signal(mutex)
+
+    int modello = rand() % qualcosa 
+    wait(chitarre[modello])
+
+    wait(mutex)
+    if(persona_in_aula == N)
+    {
+        signal(inizio_classe)
+    }
+
+    wait(inizio_classe)
+    signal(inizio_classe)
+
+
+    [LEZIONE SVOLGIMENTO]
+
+    signal(chitarre[modello])
+
+    wait(mutex)
+    persona_in_aula--
+    signal(mutex)
+
+     if (persona_in_aula == 0 && persone_in_attesa == 0) 
+     {
+        termina_masterclass()
+    }
+
+    exit()
+}
+
+
+Mancuso()
+{
+    while(true)
+    {
+        wait(inizio_classe)
+
+        [Svolgi classe]
+
+        wait(mutex)
+        if (chitarristi_in_attesa > 0) 
+        {
+            while (chitarristi_in_attesa > 0 && chitarristi_in_aula < N) 
+            {
+                chitarristi_in_attesa--
+                chitarristi_in_aula++
+                signal(attesa)  // Permette a un nuovo allievo di entrare
+            }
+        } else {
+            signal(mutex)
+            break  // Termina se non ci sono più chitarristi
+        }
+        signal(mutex)
+
+    }
+}

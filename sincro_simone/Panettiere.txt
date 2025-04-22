@@ -16,59 +16,89 @@ Cliente: - Si mette in fila
          -Se disponibile paga e se ne va
          -se non disponibile aspetta e poi svolge il passaggio di sopra
 
-// Variabili di stato
-int pane_disponibile[3] = {0, 0, 0}  // Quantità di ciascun tipo di pane disponibile
-bool in_preparazione[3] = {false, false, false}  // Indica se un tipo di pane è in preparazione
-int clienti_in_attesa[3] = {0, 0, 0}  // Numero di clienti in attesa per ciascun tipo di pane
 
-// Semafori
-semaforo mutex = 1          // Protegge l'accesso alle variabili condivise
-semaforo pane_pronto[3] = {0, 0, 0}  // Segnala quando il pane è disponibile per un tipo specifico
-semaforo cliente_servito = 0  // Sincronizza il cliente servito con il panettiere
+// Variabili globali
+semaforo mutex_coda = 1;       // Mutex per la coda principale
+semaforo clienti_in_coda = 0;  // Numero di clienti in coda
+int coda[MAX_CLIENTI];         // Array per la coda FIFO
+int testa = 0;                 // Indice della testa della coda
+int coda_size = 0;             // Numero di clienti in coda
 
-// Processo Cliente
-process Cliente(int tipo_pane) {
-    wait(mutex)
-    if (pane_disponibile[tipo_pane] > 0) {
-        // Pane disponibile, il cliente lo prende e lascia l'esercizio
-        pane_disponibile[tipo_pane] -= 1
-        signal(mutex)
-    } else {
-        // Pane non disponibile
-        if (!in_preparazione[tipo_pane]) {
-            // Il panettiere deve iniziare la preparazione
-            in_preparazione[tipo_pane] = true
-            signal(cliente_servito)  // Notifica il panettiere
+// Per ogni tipo di pane (0, 1, 2)
+array[3] di:
+    int disp[3]= 0;              // Pane disponibile
+    bool in_preparazione[3] = false;
+    semaforo mutex[3] = 1;        // Mutex per variabili del tipo
+    semaforo sem_attesa[3] = 0;   // Clienti in attesa per il tipo
+
+// Processo panettiere
+while (true) {
+    // Priorità ai clienti con pane pronto
+    for (tipo in 0..2) {
+        wait(mutex[tipo]);
+        if (disp[tipo] > 0) {
+            signal(sem_attesa[tipo]); // Servi un cliente in attesa
+            disp[tipo]--;
+            signal(mutex[tipo]);
+            break;
         }
-        // Cliente si mette in attesa della cottura
-        clienti_in_attesa[tipo_pane] += 1
-        signal(mutex)
-        wait(pane_pronto[tipo_pane])  // Attende che il pane sia pronto
+        signal(mutex[tipo]);
     }
-    // Cliente servito, lascia l'esercizio
-}
+    
+    // Se nessun cliente prioritario, servizi la coda
+  if (nessun cliente prioritario servito) {
+    // Aspetta che ci sia almeno un cliente in coda
+    wait(clienti_in_coda);
 
-// Processo Panettiere
-process Panettiere() {
-    while (true) {
-        wait(cliente_servito)  // Aspetta una richiesta di cottura
-        wait(mutex)
-        
-        // Trova quale pane deve essere infornato
-        for i = 0 to 2 do {
-            if (in_preparazione[i]) {
-                // Prepara il pane
-                in_preparazione[i] = false
-                pane_disponibile[i] += N  // Sforna N pezzi di pane
-                
-                // Servi prima i clienti in attesa
-                while (clienti_in_attesa[i] > 0) {
-                    clienti_in_attesa[i] -= 1
-                    signal(pane_pronto[i])
-                }
+    // Prendi il tipo di pane richiesto dal cliente in testa alla coda
+    wait(mutex_coda);  // Proteggi l'accesso alla coda
+    int tipo = coda[testa];  // Ottieni il tipo di pane richiesto
+    testa = (testa + 1) % MAX_CLIENTI;  // Avanza la testa della coda (gestione circolare)
+    coda_size--;  // Riduci la dimensione della coda
+    signal(mutex_coda);  // Rilascia l'accesso alla coda
+
+    // Gestisci la richiesta del cliente
+    wait(mutex[tipo]);  // Proteggi l'accesso alle variabili del tipo di pane
+    if (disp[tipo] > 0) {
+        // Se il pane è disponibile, servilo al cliente
+        disp[tipo]--;  // Riduci la quantità di pane disponibile
+        signal(mutex[tipo]);  // Rilascia l'accesso alle variabili del tipo di pane
+    } else {
+        // Se il pane non è disponibile
+        if (!in_preparazione[tipo]) {
+            // Se il pane non è già in preparazione, avvia la cottura
+            in_preparazione[tipo] = true;  // Segnala che il pane è in preparazione
+            [INIZIA COTTURA];  // Avvia la cottura (azione esterna)
+
+            // Simula il completamento della cottura (immediato in questo caso)
+            disp[tipo] = N;  // Aggiungi N pani del tipo richiesto
+            in_preparazione[tipo] = false;  // Segnala che la cottura è completata
+
+            // Sveglia i clienti in attesa per questo tipo di pane
+            for (int i = 0; i < N; i++) {
+                signal(sem_attesa[tipo]);  // Sveglia un cliente in attesa
             }
         }
-        
-        signal(mutex)
+        signal(mutex[tipo]);  // Rilascia l'accesso alle variabili del tipo di pane
+
+        // Metti il cliente in attesa del pane
+        wait(sem_attesa[tipo]);  // Aspetta che il pane sia disponibile
+
+        // Quando il pane è disponibile, servilo al cliente
+        wait(mutex[tipo]);  // Proteggi l'accesso alle variabili del tipo di pane
+        disp[tipo]--;  // Riduci la quantità di pane disponibile
+        signal(mutex[tipo]);  // Rilascia l'accesso alle variabili del tipo di pane
     }
+}
+}
+
+// Processo cliente
+process cliente(int tipo) {
+    wait(mutex_coda);
+    // Aggiungi il cliente alla coda
+    int coda_index = (testa + coda_size) % MAX_CLIENTI;
+    coda[coda_index] = tipo;
+    coda_size++;
+    signal(mutex_coda);
+    signal(clienti_in_coda);   // Notifica il panettiere
 }

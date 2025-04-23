@@ -1,0 +1,48 @@
+In un negozio di strumenti musicali ci sono al più M postazioni di prova per le chitarre. 
+Ogni potenziale cliente che trova posto può richiedere uno di N modelli a disposizione, tenendo però presente che per ogni modello ci sono solo C chitarre. 
+Si gestisca la distribuzione delle chitarre usando semafori e/o variabili di condizione e discutere, 
+per la soluzione proposta, possibili situazioni di starvation/deadlock.
+
+
+// Costanti
+postazioni : const int = M;        // Numero di postazioni di prova
+modelli : const int = N;           // Numero di modelli di chitarre
+
+// Variabili condivise
+chitarre_disponibili[N] = {C}: int;     // Array che indica quante chitarre di ogni modello sono disponibili
+num_postazioni_libere : int = M;   // Numero di postazioni libere
+sem_mutex : semaforo = 1;          // Per la mutua esclusione
+sem_postazioni : semaforo = M;     // Semaforo per le postazioni disponibili
+sem_chitarre[N] : semaforo;        // Semafori per ogni modello di chitarra
+
+
+Ciente(int id) {
+
+    wait(sem_mutex)
+    modello_richiesto = rand() % N 
+    signal(sem_mutex)   
+
+    // Richiedi una postazione
+    wait(sem_postazioni);
+    
+    // Richiedi una chitarra del modello desiderato
+    wait(sem_chitarre[modello_richiesto]);
+    
+    // Sezione critica per aggiornare lo stato
+    wait(sem_mutex);
+    chitarre_disponibili[modello_richiesto]--;
+    printf("Cliente %d ha preso una chitarra modello %d\n", id, modello_richiesto);
+    signal(sem_mutex);
+    
+    [USA LA CHITARRA]
+        
+    // Rilascia la chitarra
+    wait(sem_mutex);
+    chitarre_disponibili[modello_richiesto]++;
+    printf("Cliente %d ha restituito la chitarra modello %d\n", id, modello_richiesto);
+    signal(sem_mutex);
+    
+    // Rilascia le risorse
+    signal(sem_chitarre[modello_richiesto]);
+    signal(sem_postazioni);
+}

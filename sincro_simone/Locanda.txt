@@ -1,0 +1,74 @@
+Una locanda ha un calderone che può contenere un numero massimo di N porzioni di zuppa.
+La zuppa viene cucinata da un gruppo di K cuochi, che periodicamente aggiungiono porzioni di zuppa nel calderone.
+se il calderone è pieno, i cuochi devono aspettare prima di poter aggiungere altra zuppa.
+Nel frattempo, un gruppo di M avventori affamati arriva per servirsi autonomamente dalla zuppa.
+Ogni avventore può prendere una porzione di zuppa ed attendere se il calderone è vuoto. 
+Proporre una soluzione che faccia uso esclusivamente di mutex e variabili di condizione
+
+
+int N, K, M;
+
+int prod_ptr = 0
+int cons_ptr = 0
+
+Array bool Zuppe[N] ={0} //Array di bool, 0 = vuoto 1 = pieno 
+
+int max_zuppe = 0
+
+condizione: zuppa_disponibile = 0 
+condizione: slot_libero = 0
+
+
+mutex = 1
+
+
+
+Cuoco()
+{
+
+    while(true)
+    {
+        [Prepara zuppa]
+
+        wait(mutex)
+
+        while(max_zuppe == N) //non ci sono posti per aggiungere quindi aspetta che sia libero 
+        {
+            cond_wait(slot_libero);
+        }
+
+        Zuppa[prod_ptr] = 1
+        prod_ptr = (prod_ptr + 1) % N //Quano arriva a N cicla a 0/primo elemento perchè è il resto 
+        max_zuppe += 1
+
+        cond_signal(zuppa_disponibile) //Segnala agli avventori che ho aggiunto una zuppa
+
+        signal(mutex)
+    }
+
+}
+
+
+Cliente()
+
+{
+    while(true)
+
+    {
+
+        wait(mutex)
+
+        while(max_zuppe == 0) //Aspetto su zuppa_disponibile se manca 
+        {
+            cond_wait(zuppa_disponibile);
+        }
+
+        Zuppa[cons_ptr] = 0 //Indica che lo ha consumato 
+        cons_ptr = (cons_ptr +1) % N
+        max_zuppe -= 1
+
+        cond_signal(slot_libero) //Segnala ai cuochi che c'è uno slot libero 
+
+        signal(mutex)
+    }
+}

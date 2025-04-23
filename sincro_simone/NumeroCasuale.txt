@@ -1,0 +1,97 @@
+In un sistema sono presenti N processi che si auto-organizzano per eleggere un processo P. 
+Appena eletto, P assegna un numero casuale [0, M] (M > N) ad ognuno degli N-1 processi e successivamente produce un oggetto.  
+Il processo a cui è stato assegnato il numero più grande consuma l’oggetto prodotto da P, mentre gli altri restano in attesa. 
+Quando il processo con il numero più grande ha consumato l’oggetto, segnala P che assegna nuovi numeri ai processi e produce un nuovo oggetto, e così via.  
+
+Discutere la soluzione proposta in termini di possibili situazioni di starvation/deadlock e, nel caso, si propongano soluzioni ammissibili.
+
+
+
+int N //numero processi 
+int M //Massimo numero (M>N)
+
+int buffer[N] //Array per la produzione
+int numeri[N] //Array per la scelta del vincitore
+int buffer_pronto = 0
+
+
+int max= -1
+int vincitore = -1
+int id_consumatore = -1
+
+semaforo mutex = 1
+semaforo semafori[N]
+semaforo consumato = 0
+
+
+
+
+
+Coordinatore()
+{
+    while(1)
+    {
+        wait(mutex)
+
+        //Aspetta se il buffer è pronto 
+        while(buffer_pronto!=0)
+        {
+            signal(mutex)
+            wait(mutex)
+        }
+
+        //Produce nel buffer 
+        for(i = 0 to N)
+        {
+            buffer[i] = rand() % 100 //Qualcosa viene prodotto in buffer 
+        }
+        buffer_pronto = 1 //Il buffer è pronto 
+
+
+        //Sceglie il numero 
+        for(i= 0 to N)
+        {
+            numeri[i] = random(0,M)
+        }
+
+        //Cicla per trovare il massimo 
+        for(i=0 to N)
+        {
+            if(numeri[i]> max)
+            {
+                max = numeri[i]
+                vincitore = i
+            }
+        }
+
+        signal(semafori[vincitore])
+
+        signal(mutex) //Ipoteticamente va prima del wait consumato così i dati sono protetti
+
+        wait(consumato) //aspetta che il processo che vinca cosuma l'oggetto prodotto 
+    }
+}
+
+
+
+Lavoratore(int id)
+{
+    while(1)
+    {
+        wait(semafori[id])
+
+        wait(mutex)
+
+        if(buffer_pronto == 1 && id == vincitore)
+        {
+            buffer[id] = 0
+            buffer_pronto = 0
+            id_consumatore = id
+
+            signal(consumato)
+
+        }
+
+        signal(mutex)
+    }
+}
